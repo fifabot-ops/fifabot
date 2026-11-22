@@ -109,12 +109,13 @@ window.updateScore = function(btn, change) {
 };
 
 // ============================================
-// MOTEUR STATISTIQUE PENALTY FIFABOT v7
+// MOTEUR STATISTIQUE PENALTY FIFABOT v8
 // ============================================
 function analyzeHistory(t1, t2, name1, name2) {
   const n = t1.length;
   const avg1 = t1.reduce((a, b) => a + b, 0) / n;
   const avg2 = t2.reduce((a, b) => a + b, 0) / n;
+  const totalAvg = avg1 + avg2;
   
   // --- 1. GÉNÉRATION DU SCORE EXACT ---
   let finalScore1 = Math.round(avg1) + Math.floor(Math.random() * 3) - 1;
@@ -131,22 +132,32 @@ function analyzeHistory(t1, t2, name1, name2) {
   const totalExact = finalScore1 + finalScore2;
 
   // --- 2. CALCUL DES STATISTIQUES HISTORIQUES ---
-  let wins1 = 0, wins2 = 0, draws = 0, h1 = 0, h2 = 0;
+  let wins1 = 0, wins2 = 0, h1 = 0, h2 = 0;
   let evenTotal = 0, oddTotal = 0;
-  let eq2PlusOui = 0, eq2PlusNon = 0;
-  let eq3PlusOui = 0, eq3PlusNon = 0;
+  let eq2PlusOui = 0, eq3PlusOui = 0;
+  let over65 = 0, over75 = 0, over85 = 0;
+  let t1Over35 = 0, t2Over35 = 0, t1Over45 = 0, t2Over45 = 0;
 
   for (let i = 0; i < n; i++) {
     const s1 = t1[i], s2 = t2[i], total = s1 + s2;
     
-    if (s1 > s2) wins1++; else if (s2 > s1) wins2++; else draws++;
+    if (s1 > s2) wins1++; else if (s2 > s1) wins2++;
     if (s1 - s2 > 1.5) h1++;
     if (s2 - s1 > -1.5) h2++;
     
     if (total % 2 === 0) evenTotal++; else oddTotal++;
     
-    if (s1 >= 2 && s2 >= 2) eq2PlusOui++; else eq2PlusNon++;
-    if (s1 >= 3 && s2 >= 3) eq3PlusOui++; else eq3PlusNon++;
+    if (s1 >= 2 && s2 >= 2) eq2PlusOui++;
+    if (s1 >= 3 && s2 >= 3) eq3PlusOui++;
+    
+    if (total > 6.5) over65++;
+    if (total > 7.5) over75++;
+    if (total > 8.5) over85++;
+    
+    if (s1 > 3.5) t1Over35++;
+    if (s1 > 4.5) t1Over45++;
+    if (s2 > 3.5) t2Over35++;
+    if (s2 > 4.5) t2Over45++;
   }
 
   // --- 3. OPTION 1 : Marchés de Résultat / Équipe (Sans les Totaux) ---
@@ -158,46 +169,45 @@ function analyzeHistory(t1, t2, name1, name2) {
     { id: 'pair', label: 'Total Pair', rate: evenTotal/n },
     { id: 'impair', label: 'Total Impair', rate: oddTotal/n },
     { id: 'eq2+', label: 'Chaque équipe marque (2) ou Plus : OUI', rate: eq2PlusOui/n },
-    { id: 'eq2-', label: 'Chaque équipe marque (2) ou Plus : NON', rate: eq2PlusNon/n },
+    { id: 'eq2-', label: 'Chaque équipe marque (2) ou Plus : NON', rate: 1 - (eq2PlusOui/n) },
     { id: 'eq3+', label: 'Chaque équipe marque (3) ou Plus : OUI', rate: eq3PlusOui/n },
-    { id: 'eq3-', label: 'Chaque équipe marque (3) ou Plus : NON', rate: eq3PlusNon/n }
+    { id: 'eq3-', label: 'Chaque équipe marque (3) ou Plus : NON', rate: 1 - (eq3PlusOui/n) }
   ];
 
-  // On prend le marché le plus probable
   marketsOption1.sort((a, b) => b.rate - a.rate);
   const bestOption1 = marketsOption1[0];
 
-  // --- 4. OPTION 2 : Marchés de Totaux (Basés sur le score exact) ---
-  // On calcule le total global, le total 1 et le total 2
-  const lineUnderGlobal = (totalExact - 1) + 0.5; 
-  const lineOverGlobal = (totalExact + 1) - 0.5; 
+  // --- 4. OPTION 2 : Un seul choix parmi les Totaux (basé sur les stats) ---
+  // On crée une liste de totaux possibles, et on choisit le plus pertinent
+  let totalOptions = [];
   
-  let opt2 = { label: '', justification: '' };
-  
-  // On choisit entre un pari sur le Total Global, le Total 1 ou le Total 2
-  const randomChoice = Math.random();
-  
-  if (randomChoice < 0.4) {
-    // Total Global
-    const isUnder = totalExact < 7 || (totalExact === 7 && Math.random() > 0.5);
-    if (isUnder) {
-      opt2.label = `Total (${lineUnderGlobal}) : Moins de`;
-      opt2.justification = `Basé sur le total projeté de ${totalExact} buts.`;
-    } else {
-      opt2.label = `Total (${lineOverGlobal}) : Plus de`;
-      opt2.justification = `Basé sur le total projeté de ${totalExact} buts.`;
-    }
-  } else if (randomChoice < 0.7) {
-    // Total 1
-    const line1 = Math.floor(finalScore1) + 0.5;
-    opt2.label = `Total 1 (${line1}) : Plus de`;
-    opt2.justification = `L'équipe 1 devrait marquer au moins ${Math.ceil(line1)} penaltys.`;
-  } else {
-    // Total 2
-    const line2 = Math.floor(finalScore2) + 0.5;
-    opt2.label = `Total 2 (${line2}) : Plus de`;
-    opt2.justification = `L'équipe 2 devrait marquer au moins ${Math.ceil(line2)} penaltys.`;
-  }
+  // Total Global
+  const isGlobalOver = over75/n > 0.5;
+  const globalLine = isGlobalOver ? 7.5 : 6.5;
+  totalOptions.push({
+    label: `Total (${globalLine}) : ${isGlobalOver ? 'Plus de' : 'Moins de'}`,
+    score: Math.abs((isGlobalOver ? over75/n : 1 - over75/n) - 0.5) // Plus c'est proche de 0.5, plus c'est "sûr" (proche de 100% ou 0%)
+  });
+
+  // Total 1
+  const isT1Over = t1Over35/n > 0.5;
+  const t1Line = isT1Over ? 3.5 : 2.5;
+  totalOptions.push({
+    label: `Total 1 (${t1Line}) : ${isT1Over ? 'Plus de' : 'Moins de'}`,
+    score: Math.abs((isT1Over ? t1Over35/n : 1 - t1Over35/n) - 0.5)
+  });
+
+  // Total 2
+  const isT2Over = t2Over35/n > 0.5;
+  const t2Line = isT2Over ? 3.5 : 2.5;
+  totalOptions.push({
+    label: `Total 2 (${t2Line}) : ${isT2Over ? 'Plus de' : 'Moins de'}`,
+    score: Math.abs((isT2Over ? t2Over35/n : 1 - t2Over35/n) - 0.5)
+  });
+
+  // On trie pour prendre le "plus sûr" (score le plus proche de 0 signifie un taux de réussite proche de 100%)
+  totalOptions.sort((a, b) => a.score - b.score);
+  const bestTotal = totalOptions[0];
 
   return [
     { 
@@ -207,8 +217,8 @@ function analyzeHistory(t1, t2, name1, name2) {
     },
     { 
       market: 'Prédiction Total', 
-      option: opt2.label, 
-      justification: opt2.justification 
+      option: bestTotal.label, 
+      justification: `Basé sur l'analyse des tendances de marque (Total Global ou Individuel).` 
     },
     { 
       market: 'Score Exact (Base)', 
@@ -251,4 +261,4 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
     </div>
   `;
   window.scrollTo(0, 0);
-          }
+              }
