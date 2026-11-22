@@ -1,0 +1,228 @@
+/* ============================================
+   FIFABOT — Styles globaux
+   ============================================ */
+
+:root {
+  --electric-blue: #007FFF;
+  --sky-blue: #66CCFF;
+  --ice-white: #F0F8FF;
+  --secondary-blue: #1E90FF;
+  --bg-main: #080D18;
+  --bg-card: #111B2B;
+  --text-main: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --border: #233247;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ----- Navigation ----- */
+.navbar {
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-logo {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--electric-blue);
+  text-decoration: none;
+  letter-spacing: 1px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.navbar-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.navbar-links a:hover {
+  color: var(--electric-blue);
+}
+
+/* ----- Conteneur principal ----- */
+.main-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ----- Carte ----- */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 127, 255, 0.1);
+}
+
+.card-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+
+.card-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+/* ----- Formulaires ----- */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: var(--electric-blue);
+}
+
+/* ----- Boutons ----- */
+.btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--electric-blue);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--secondary-blue);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ----- Messages ----- */
+.message {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: none;
+}
+
+.message.info,
+.message.error,
+.message.success {
+  display: block;
+}
+
+.message.info {
+  background-color: rgba(102, 204, 255, 0.1);
+  color: var(--sky-blue);
+  border: 1px solid rgba(102, 204, 255, 0.3);
+}
+
+.message.error {
+  background-color: rgba(255, 80, 80, 0.1);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 80, 80, 0.3);
+}
+
+.message.success {
+  background-color: rgba(80, 220, 120, 0.1);
+  color: #4ade80;
+  border: 1px solid rgba(80, 220, 120, 0.3);
+}
+
+/* ----- Liens ----- */
+.link {
+  color: var(--electric-blue);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ----- Héro (page d'accueil) ----- */
+.hero {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.hero h1 {
+  font-size: 28px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--electric-blue), var(--sky-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero p {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hero-buttons .btn {
+  width: auto;
+  padding: 12px 24px;
+  }
