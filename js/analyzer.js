@@ -109,22 +109,20 @@ window.updateScore = function(btn, change) {
 };
 
 // ============================================
-// MOTEUR STATISTIQUE PENALTY FIFABOT v6
+// MOTEUR STATISTIQUE PENALTY FIFABOT v7
 // ============================================
 function analyzeHistory(t1, t2, name1, name2) {
   const n = t1.length;
   const avg1 = t1.reduce((a, b) => a + b, 0) / n;
   const avg2 = t2.reduce((a, b) => a + b, 0) / n;
-  const totalAvg = avg1 + avg2;
   
-  // --- 1. GÉNÉRATION DU SCORE EXACT (Base de tout) ---
+  // --- 1. GÉNÉRATION DU SCORE EXACT ---
   let finalScore1 = Math.round(avg1) + Math.floor(Math.random() * 3) - 1;
   let finalScore2 = Math.round(avg2) + Math.floor(Math.random() * 3) - 1;
   
   if (finalScore1 < 0) finalScore1 = 0;
   if (finalScore2 < 0) finalScore2 = 0;
   
-  // Pas de match nul
   if (finalScore1 === finalScore2) {
     if (Math.random() > 0.5) finalScore1++; else finalScore2++;
   }
@@ -132,68 +130,90 @@ function analyzeHistory(t1, t2, name1, name2) {
   const exactScore = `${finalScore1} - ${finalScore2}`;
   const totalExact = finalScore1 + finalScore2;
 
-  // --- 2. GÉNÉRATION DE L'OPTION 1 (Aléatoire pondéré) ---
-  // On crée une liste de paris viables
-  const possibleOptions1 = [
-    "Chaque équipe marque (3) ou Plus : Non",
-    "Chaque équipe marque (4) ou Plus : Non",
-    "Total (6.5) : Plus de",
-    "Total (7.5) : Plus de",
-    "Total (8.5) : Plus de",
-    "Total (6.5) : Moins de",
-    "Total (7.5) : Moins de",
-    "Total 1 (3.5) : Plus de",
-    "Total 2 (3.5) : Plus de",
-    "Handicap : 1 (-1.5)",
-    "Handicap : 2 (+1.5)"
-  ];
-  
-  // On pioche une option au hasard dans cette liste
-  const opt1 = possibleOptions1[Math.floor(Math.random() * possibleOptions1.length)];
+  // --- 2. CALCUL DES STATISTIQUES HISTORIQUES ---
+  let wins1 = 0, wins2 = 0, draws = 0, h1 = 0, h2 = 0;
+  let evenTotal = 0, oddTotal = 0;
+  let eq2PlusOui = 0, eq2PlusNon = 0;
+  let eq3PlusOui = 0, eq3PlusNon = 0;
 
-  // --- 3. GÉNÉRATION DE L'OPTION 2 (Basée sur le Total du Score Exact) ---
-  // Règle : On retranche 1 ou on ajoute 1 au total exact pour trouver la ligne
-  const lineUnder = (totalExact - 1) + 0.5; // ex: Total 7 => Moins de 6.5
-  const lineOver = (totalExact + 1) - 0.5;  // ex: Total 7 => Plus de 7.5
-  
-  let opt2;
-  let opt2Justification;
-
-  // Choix logique entre le Plus et le Moins selon le total
-  if (Math.random() > 0.5 || totalExact < 6) {
-     opt2 = `Total (${lineUnder}) : Moins de`;
-     opt2Justification = `Basé sur un total projeté de ${totalExact} buts.`;
-  } else {
-     opt2 = `Total (${lineOver}) : Plus de`;
-     opt2Justification = `Basé sur un total projeté de ${totalExact} buts.`;
+  for (let i = 0; i < n; i++) {
+    const s1 = t1[i], s2 = t2[i], total = s1 + s2;
+    
+    if (s1 > s2) wins1++; else if (s2 > s1) wins2++; else draws++;
+    if (s1 - s2 > 1.5) h1++;
+    if (s2 - s1 > -1.5) h2++;
+    
+    if (total % 2 === 0) evenTotal++; else oddTotal++;
+    
+    if (s1 >= 2 && s2 >= 2) eq2PlusOui++; else eq2PlusNon++;
+    if (s1 >= 3 && s2 >= 3) eq3PlusOui++; else eq3PlusNon++;
   }
 
-  // Ajout d'une prédiction sur un Total Individuel (Option 2 bis)
-  const isTeam1Better = avg1 > avg2;
-  const bestTeamAvg = isTeam1Better ? avg1 : avg2;
-  const individualLine = Math.floor(bestTeamAvg) + 0.5;
-  const individualPrediction = `Total ${isTeam1Better ? '1' : '2'} (${individualLine}) : Plus de`;
+  // --- 3. OPTION 1 : Marchés de Résultat / Équipe (Sans les Totaux) ---
+  const marketsOption1 = [
+    { id: 'w1', label: `Victoire ${name1}`, rate: wins1/n },
+    { id: 'w2', label: `Victoire ${name2}`, rate: wins2/n },
+    { id: 'h1', label: `Handicap : 1 (-1.5)`, rate: h1/n },
+    { id: 'h2', label: `Handicap : 2 (1.5)`, rate: h2/n },
+    { id: 'pair', label: 'Total Pair', rate: evenTotal/n },
+    { id: 'impair', label: 'Total Impair', rate: oddTotal/n },
+    { id: 'eq2+', label: 'Chaque équipe marque (2) ou Plus : OUI', rate: eq2PlusOui/n },
+    { id: 'eq2-', label: 'Chaque équipe marque (2) ou Plus : NON', rate: eq2PlusNon/n },
+    { id: 'eq3+', label: 'Chaque équipe marque (3) ou Plus : OUI', rate: eq3PlusOui/n },
+    { id: 'eq3-', label: 'Chaque équipe marque (3) ou Plus : NON', rate: eq3PlusNon/n }
+  ];
+
+  // On prend le marché le plus probable
+  marketsOption1.sort((a, b) => b.rate - a.rate);
+  const bestOption1 = marketsOption1[0];
+
+  // --- 4. OPTION 2 : Marchés de Totaux (Basés sur le score exact) ---
+  // On calcule le total global, le total 1 et le total 2
+  const lineUnderGlobal = (totalExact - 1) + 0.5; 
+  const lineOverGlobal = (totalExact + 1) - 0.5; 
+  
+  let opt2 = { label: '', justification: '' };
+  
+  // On choisit entre un pari sur le Total Global, le Total 1 ou le Total 2
+  const randomChoice = Math.random();
+  
+  if (randomChoice < 0.4) {
+    // Total Global
+    const isUnder = totalExact < 7 || (totalExact === 7 && Math.random() > 0.5);
+    if (isUnder) {
+      opt2.label = `Total (${lineUnderGlobal}) : Moins de`;
+      opt2.justification = `Basé sur le total projeté de ${totalExact} buts.`;
+    } else {
+      opt2.label = `Total (${lineOverGlobal}) : Plus de`;
+      opt2.justification = `Basé sur le total projeté de ${totalExact} buts.`;
+    }
+  } else if (randomChoice < 0.7) {
+    // Total 1
+    const line1 = Math.floor(finalScore1) + 0.5;
+    opt2.label = `Total 1 (${line1}) : Plus de`;
+    opt2.justification = `L'équipe 1 devrait marquer au moins ${Math.ceil(line1)} penaltys.`;
+  } else {
+    // Total 2
+    const line2 = Math.floor(finalScore2) + 0.5;
+    opt2.label = `Total 2 (${line2}) : Plus de`;
+    opt2.justification = `L'équipe 2 devrait marquer au moins ${Math.ceil(line2)} penaltys.`;
+  }
 
   return [
     { 
       market: 'Recommandation FIFABOT', 
-      option: opt1, 
-      justification: `Option à fort potentiel sélectionnée pour cette analyse.` 
+      option: bestOption1.label, 
+      justification: `Le pari le plus sûr statistiquement (${Math.round(bestOption1.rate * 100)}% de réussite).` 
     },
     { 
-      market: 'Option Sécurisée (Total)', 
-      option: opt2, 
-      justification: `${opt2Justification} Pari sûr.` 
-    },
-    { 
-      market: 'Option Totals Individuels', 
-      option: individualPrediction, 
-      justification: `L'équipe ${isTeam1Better ? '1' : '2'} a la meilleure moyenne (${bestTeamAvg.toFixed(1)}).` 
+      market: 'Prédiction Total', 
+      option: opt2.label, 
+      justification: opt2.justification 
     },
     { 
       market: 'Score Exact (Base)', 
       option: exactScore, 
-      justification: `Score le plus probable basé sur les performances historiques.` 
+      justification: `Score probable calculé sur les moyennes (${avg1.toFixed(1)} vs ${avg2.toFixed(1)}).` 
     }
   ];
 }
@@ -206,9 +226,9 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
   const totalAvg = (t1.reduce((a,b)=>a+b,0)/t1.length + t2.reduce((a,b)=>a+b,0)/t2.length).toFixed(1);
 
   const propsHtml = propositions.map((p, i) => `
-    <div class="proposition-card" style="border-left: 6px solid ${i === 0 ? 'var(--primary)' : i === 1 ? 'var(--success)' : i === 2 ? 'var(--secondary-blue)' : 'var(--accent)'};">
+    <div class="proposition-card" style="border-left: 6px solid ${i === 0 ? 'var(--primary)' : i === 1 ? 'var(--success)' : 'var(--accent)'};">
       <div class="proposition-header">
-        <span class="proposition-number" style="background: ${i === 0 ? 'var(--primary)' : i === 1 ? 'var(--success)' : i === 2 ? 'var(--secondary-blue)' : 'var(--accent)'};">${p.market}</span>
+        <span class="proposition-number" style="background: ${i === 0 ? 'var(--primary)' : i === 1 ? 'var(--success)' : 'var(--accent)'};">${p.market}</span>
       </div>
       <div class="proposition-option" style="margin-top: 12px; font-size: 20px;">${p.option}</div>
       <div class="proposition-justification">${p.justification}</div>
@@ -224,11 +244,11 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
       </h2>
       <p style="color:var(--text-secondary); font-size:13px;">Moyenne totale : ${totalAvg} penaltys</p>
     </div>
-    <h3 style="font-size:18px; margin:24px 0 16px 0; font-weight:800; text-align:center;">⚡ Top Prédictions FIFABOT</h3>
+    <h3 style="font-size:18px; margin:24px 0 16px 0; font-weight:800; text-align:center;">⚡ Top 3 des Prédictions</h3>
     ${propsHtml}
     <div style="display:flex; gap:12px; margin-top:24px; margin-bottom:24px;">
       <a href="competitions.html" class="btn btn-primary" style="text-align:center; text-decoration:none; flex:1;">Nouvelle analyse</a>
     </div>
   `;
   window.scrollTo(0, 0);
-                         }
+          }
