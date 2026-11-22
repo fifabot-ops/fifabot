@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Abonnement Premium — FIFABOT</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <header class="app-header">
+    <p style="color: var(--text-secondary); font-size: 14px; font-weight: 600; margin-bottom: 4px;">Passez au niveau</p>
+    <h1>Premium <span style="color: var(--accent);">.</span></h1>
+  </header>
+
+  <main style="padding: 10px 20px; max-width: 600px; margin: 0 auto; width: 100%;">
+
+    <!-- Carte de l'offre -->
+    <div class="card" style="text-align: center; border: 2px solid var(--primary);">
+      
+      <!-- Badge Promo -->
+      <div style="background: var(--accent); color: white; font-size: 12px; font-weight: 800; padding: 6px 16px; border-radius: 20px; display: inline-block; margin-bottom: 16px; letter-spacing: 1px;">
+        OFFRE SPÉCIALE ALYA15
+      </div>
+
+      <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 8px;">Abonnement FIFABOT</h2>
+      <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Accès illimité au moteur d'analyse</p>
+
+      <div style="margin-bottom: 24px;">
+        <span style="font-size: 48px; font-weight: 900; color: var(--primary);">1 500</span>
+        <span style="font-size: 18px; font-weight: 700; color: var(--text-secondary);"> FCFA</span>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;">Paiement unique pour 30 jours</p>
+      </div>
+
+      <ul style="text-align: left; margin-bottom: 32px; list-style: none; padding: 0 10px;">
+        <li style="margin-bottom: 12px; font-size: 14px; display:flex; align-items:center; gap:8px;">
+          <span style="color: var(--success); font-weight: 900;">✓</span> Analyse de 4 à 5 historiques
+        </li>
+        <li style="margin-bottom: 12px; font-size: 14px; display:flex; align-items:center; gap:8px;">
+          <span style="color: var(--success); font-weight: 900;">✓</span> 3 propositions statistiques
+        </li>
+        <li style="margin-bottom: 12px; font-size: 14px; display:flex; align-items:center; gap:8px;">
+          <span style="color: var(--success); font-weight: 900;">✓</span> Historique de vos analyses
+        </li>
+        <li style="font-size: 14px; display:flex; align-items:center; gap:8px;">
+          <span style="color: var(--success); font-weight: 900;">✓</span> Support prioritaire
+        </li>
+      </ul>
+
+      <!-- Formulaire de paiement (simulé) -->
+      <form id="payment-form">
+        <div class="form-group" style="text-align: left;">
+          <label for="transaction-ref">Référence de transaction</label>
+          <input type="text" id="transaction-ref" placeholder="Ex: TXN-123456789" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 12px;">
+          J'ai payé, valider mon compte
+        </button>
+      </form>
+
+      <div id="message" class="message"></div>
+
+      <p style="color: var(--text-secondary); font-size: 12px; margin-top: 24px; line-height: 1.5;">
+        ⚠️ Votre abonnement sera activé manuellement après vérification du paiement par notre équipe (sous 24h).
+      </p>
+    </div>
+
+  </main>
+
+  <!-- BARRE DE NAVIGATION EN BAS -->
+  <nav class="app-bottom-nav">
+    <a href="dashboard.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      Accueil
+    </a>
+    <a href="competitions.html" class="nav-item active">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      Jeux
+    </a>
+    <a href="history.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      Historique
+    </a>
+    <a href="#" id="logout-btn-nav" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      Quitter
+    </a>
+  </nav>
+
+  <script src="js/supabase-client.js"></script>
+  <script src="js/payment.js"></script>
+  <script>
+    document.getElementById('logout-btn-nav').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await window.supabaseClient.auth.signOut();
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
