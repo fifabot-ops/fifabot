@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analyse — FIFABOT</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-logo">FIFABOT</a>
+    <div class="navbar-links">
+      <a href="dashboard.html">Tableau de bord</a>
+      <a href="competitions.html">Compétitions</a>
+      <button id="logout-btn" class="btn" style="width:auto; padding:8px 16px; background:transparent; color:var(--text-secondary); border:1px solid var(--border);">Déconnexion</button>
+    </div>
+  </nav>
+
+  <main style="padding: 20px; max-width: 800px; margin: 0 auto; width: 100%;">
+
+    <!-- En-tête -->
+    <div id="header" style="margin-bottom: 24px;">
+      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">Analyse en cours</p>
+      <h1 id="competition-name" style="font-size: 24px; margin-bottom: 6px;">Chargement...</h1>
+      <p id="competition-meta" style="color: var(--sky-blue); font-size: 14px;"></p>
+    </div>
+
+    <!-- Formulaire -->
+    <form id="analyzer-form" style="display:none;">
+
+      <!-- Choix du nombre de matchs -->
+      <div class="card" style="max-width:100%; margin-bottom:16px;">
+        <h3 style="font-size:16px; margin-bottom:12px;">Nombre de matchs historiques</h3>
+        <div style="display:flex; gap:16px;">
+          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer;">
+            <input type="radio" name="match_count" value="4" checked> 4 matchs
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer;">
+            <input type="radio" name="match_count" value="5"> 5 matchs
+          </label>
+        </div>
+      </div>
+
+      <!-- Équipe 1 -->
+      <div class="card" style="max-width:100%; margin-bottom:16px;">
+        <h3 style="font-size:16px; margin-bottom:12px;">Équipe 1</h3>
+        <div class="form-group">
+          <label for="team1-name">Nom de l'équipe</label>
+          <input type="text" id="team1-name" placeholder="Ex : PSG" required>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
+          Scores de l'équipe 1 (du plus ancien au plus récent) :
+        </p>
+        <div id="team1-scores"></div>
+      </div>
+
+      <!-- Équipe 2 -->
+      <div class="card" style="max-width:100%; margin-bottom:16px;">
+        <h3 style="font-size:16px; margin-bottom:12px;">Équipe 2</h3>
+        <div class="form-group">
+          <label for="team2-name">Nom de l'équipe</label>
+          <input type="text" id="team2-name" placeholder="Ex : Marseille" required>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
+          Scores de l'équipe 2 (du plus ancien au plus récent) :
+        </p>
+        <div id="team2-scores"></div>
+      </div>
+
+      <!-- Bouton -->
+      <button type="submit" class="btn btn-primary" style="margin-bottom:16px;">
+        Lancer l'analyse
+      </button>
+      <div id="message" class="message"></div>
+    </form>
+
+    <!-- Résultats -->
+    <div id="results" style="display:none;"></div>
+
+  </main>
+
+  <script src="js/supabase-client.js"></script>
+  <script src="js/analyzer.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
