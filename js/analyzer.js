@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 3. Charger la compétition depuis Supabase
+    // 3. Charger la compétition
     const { data: competition, error: compError } = await window.supabaseClient
       .from('competitions')
       .select('id, name, mode, format, games (name, version)')
@@ -34,14 +34,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 4. Afficher les infos de la compétition
+    // 4. Afficher les infos
     const game = competition.games || {};
     nameEl.innerHTML = `${competition.name} <span style="color: var(--accent);">.</span>`;
     metaEl.textContent = `${game.name || ''} ${game.version || ''} • ${competition.mode} • ${competition.format || ''}`;
     
     form.style.display = 'block';
 
-    // --- GESTION DYNAMIQUE DU FORMULAIRE ---
+    // --- GESTION DYNAMIQUE DU FORMULAIRE (BOUTONS + / -) ---
     function generateScoreFields(count) {
       for (const teamNum of [1, 2]) {
         const container = document.getElementById(`team${teamNum}-scores`);
@@ -50,13 +50,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         for (let i = 1; i <= count; i++) {
           container.innerHTML += `
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-              <span style="color:var(--text-secondary); font-size:13px; font-weight:600;">Séance ${i}</span>
-              <input type="number" min="0" max="20" required
-                data-team="${teamNum}" data-match="${i}"
-                class="score-input"
-                placeholder="0"
-                style="width:100px; padding:14px; background:var(--bg-main); border:1px solid transparent; border-radius:12px; color:var(--text-main); font-size:16px; font-weight:700; text-align:center; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; background:var(--bg-main); padding:10px 16px; border-radius:16px;">
+              <span style="color:var(--text-secondary); font-size:14px; font-weight:700;">Séance ${i}</span>
+              
+              <div style="display:flex; align-items:center; gap:16px;">
+                <!-- Bouton Moins -->
+                <button type="button" onclick="updateScore(this, -1)" style="width:36px; height:36px; border-radius:50%; background:var(--bg-card); border:none; box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); font-size:20px; font-weight:800; color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center;">−</button>
+                
+                <!-- Affichage du score -->
+                <input type="number" readonly value="0"
+                  data-team="${teamNum}" data-match="${i}"
+                  class="score-input"
+                  style="width:40px; background:transparent; border:none; color:var(--text-main); font-size:22px; font-weight:800; text-align:center; outline:none; padding:0; -moz-appearance:textfield;">
+                
+                <!-- Bouton Plus -->
+                <button type="button" onclick="updateScore(this, 1)" style="width:36px; height:36px; border-radius:50%; background:var(--bg-card); border:none; box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); font-size:20px; font-weight:800; color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center;">+</button>
+              </div>
             </div>
           `;
         }
@@ -103,19 +112,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       for (let i = 1; i <= matchCount; i++) {
         const s1 = document.querySelector(`.score-input[data-team="1"][data-match="${i}"]`);
         const s2 = document.querySelector(`.score-input[data-team="2"][data-match="${i}"]`);
-        const v1 = parseInt(s1.value);
-        const v2 = parseInt(s2.value);
-        
-        if (isNaN(v1) || isNaN(v2) || v1 < 0 || v2 < 0) {
-          messageEl.textContent = `❌ Scores invalides à la séance ${i}.`;
-          messageEl.className = 'message error';
-          return;
-        }
-        team1Scores.push(v1);
-        team2Scores.push(v2);
+        team1Scores.push(parseInt(s1.value));
+        team2Scores.push(parseInt(s2.value));
       }
 
-      // Cacher le message d'erreur s'il y en avait un
+      // Cacher le message d'erreur
       messageEl.className = 'message';
       messageEl.textContent = '';
 
@@ -140,7 +141,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }]);
       } catch (dbErr) {
         console.error("Erreur de sauvegarde:", dbErr);
-        // On ne bloque pas l'utilisateur si la sauvegarde échoue
       }
 
       showResults(competition, team1Name, team2Name, stats, propositions);
@@ -152,6 +152,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error(err);
   }
 });
+
+// --- FONCTION POUR METTRE A JOUR LE SCORE AVEC LES BOUTONS ---
+window.updateScore = function(btn, change) {
+  const input = btn.parentElement.querySelector('input');
+  let val = parseInt(input.value) || 0;
+  val += change;
+  if (val < 0) val = 0;
+  if (val > 20) val = 20;
+  input.value = val;
+};
 
 // --- MOTEUR D'ANALYSE ---
 function computeStats(t1, t2) {
@@ -187,7 +197,7 @@ function generatePropositions(stats, name1, name2) {
   if (stats.over35 >= Math.ceil(n * 0.6)) {
     props.push({ market: 'Total de penaltys', option: 'Plus de 3.5 buts', frequency: freq(stats.over35), justification: `${stats.over35}/${n} séances à plus de 3.5 penaltys réussis.`, support: stats.over35 / n });
   } else {
-    const under45 = n - scores.filter(s => s.total > 4.5).length;
+    const under45 = n - stats.scores.filter(s => s.total > 4.5).length;
     props.push({ market: 'Total de penaltys', option: 'Moins de 4.5 buts', frequency: freq(under45), justification: `Tendance à moins de 4.5 penaltys réussis.`, support: under45 / n });
   }
 
@@ -262,4 +272,4 @@ function showResults(competition, name1, name2, stats, propositions) {
     </div>
   `;
   window.scrollTo(0, 0);
-}
+      }
