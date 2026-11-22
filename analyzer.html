@@ -22,46 +22,48 @@
     <form id="analyzer-form" style="display:none;">
 
       <!-- Choix du nombre de séances -->
-      <div class="card" style="padding: 20px;">
-        <h3 style="font-size:14px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--text-secondary);">Nombre de séances</h3>
+      <div class="card" style="padding: 16px; margin-bottom: 16px;">
         <div style="display:flex; gap:12px;">
-          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:14px; background:var(--bg-main); border:1px solid transparent; border-radius:12px; font-weight:600; font-size:14px; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
+          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:12px; background:var(--bg-main); border:1px solid transparent; border-radius:12px; font-weight:600; font-size:13px; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
             <input type="radio" name="match_count" value="4" checked> 4 séances
           </label>
-          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:14px; background:var(--bg-main); border:1px solid transparent; border-radius:12px; font-weight:600; font-size:14px; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
+          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:12px; background:var(--bg-main); border:1px solid transparent; border-radius:12px; font-weight:600; font-size:13px; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
             <input type="radio" name="match_count" value="5"> 5 séances
           </label>
         </div>
       </div>
 
-      <!-- Équipe 1 -->
-      <div class="card" style="padding: 20px;">
-        <h3 style="font-size:16px; margin-bottom:16px; font-weight:800; color:var(--primary);">Équipe 1</h3>
-        <div class="form-group">
-          <label for="team1-name">Nom de l'équipe</label>
-          <input type="text" id="team1-name" placeholder="Ex : PSG" required>
+      <!-- Noms des équipes (en haut, côte à côte) -->
+      <div class="duel-container" style="margin-bottom: 12px;">
+        <div class="duel-card" style="box-shadow: none; background: transparent; padding: 0; border: none;">
+          <input type="text" id="team1-name" placeholder="Équipe 1" required
+            style="width: 100%; text-align: center; padding: 14px; background: var(--bg-main); border: 1px solid transparent; border-radius: 12px; color: var(--primary); font-size: 15px; font-weight: 800; outline: none; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
         </div>
-        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 12px; font-weight: 600;">
-          Tirs réussis (du plus ancien au plus récent)
-        </p>
-        <div id="team1-scores"></div>
+        <div class="duel-card" style="box-shadow: none; background: transparent; padding: 0; border: none;">
+          <input type="text" id="team2-name" placeholder="Équipe 2" required
+            style="width: 100%; text-align: center; padding: 14px; background: var(--bg-main); border: 1px solid transparent; border-radius: 12px; color: var(--accent); font-size: 15px; font-weight: 800; outline: none; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
+        </div>
       </div>
 
-      <!-- Équipe 2 -->
-      <div class="card" style="padding: 20px;">
-        <h3 style="font-size:16px; margin-bottom:16px; font-weight:800; color:var(--primary);">Équipe 2</h3>
-        <div class="form-group">
-          <label for="team2-name">Nom de l'équipe</label>
-          <input type="text" id="team2-name" placeholder="Ex : Marseille" required>
+      <!-- Scores côte à côte -->
+      <div class="duel-container">
+        
+        <!-- Colonne Équipe 1 -->
+        <div class="duel-card">
+          <div class="duel-title" id="team1-title">ÉQUIPE 1</div>
+          <div id="team1-scores"></div>
         </div>
-        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 12px; font-weight: 600;">
-          Tirs réussis (du plus ancien au plus récent)
-        </p>
-        <div id="team2-scores"></div>
+
+        <!-- Colonne Équipe 2 -->
+        <div class="duel-card">
+          <div class="duel-title" id="team2-title" style="color: var(--accent);">ÉQUIPE 2</div>
+          <div id="team2-scores"></div>
+        </div>
+
       </div>
 
       <!-- Bouton -->
-      <button type="submit" class="btn btn-primary" style="margin-bottom:24px;">
+      <button type="submit" class="btn btn-primary" style="margin-bottom:24px; margin-top: 8px;">
         ⚡ Lancer l'analyse
       </button>
       <div id="message" class="message"></div>
