@@ -194,4 +194,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       <div class="card" style="max-width:100%; margin-bottom:16px;">
         <h3 style="font-size:13px; margin-bottom:14px; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); font-weight:700;">Historique</h3>
-       
+        ${matchRows}
+      </div>
+
+      <div class="card" style="max-width:100%; margin-bottom:16px;">
+        <h3 style="font-size:13px; margin-bottom:14px; text-transform:uppercase; letter-spacing:1px; color:var(--text-secondary); font-weight:700;">Statistiques clés</h3>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value">${stats.avg1.toFixed(1)}</div>
+            <div class="stat-label">Moy. ${name1}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value">${stats.avg2.toFixed(1)}</div>
+            <div class="stat-label">Moy. ${name2}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value">${stats.avgTotal.toFixed(1)}</div>
+            <div class="stat-label">Total moyen</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value">${stats.btts}/${stats.n}</div>
+            <div class="stat-label">BTTS</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px; margin-bottom:14px; margin-top:24px; letter-spacing:-0.3px;">⚡ Propositions FIFABOT</h3>
+      ${propsHtml}
+
+      <p style="color:var(--text-secondary); font-size:11px; margin-top:20px; text-align:center; line-height:1.6;">
+        ⚠️ Ces propositions sont basées sur les fréquences historiques observées. Les résultats passés ne garantissent pas les résultats futurs.
+      </p>
+
+      <div style="display:flex; gap:12px; margin-top:24px; margin-bottom:24px;">
+        <a href="competitions.html" class="btn btn-primary" style="text-align:center; text-decoration:none; flex:1;">Nouvelle analyse</a>
+        <a href="dashboard.html" class="btn" style="text-align:center; text-decoration:none; flex:1; background:transparent; border:1px solid var(--border); color:var(--text-secondary);">Tableau de bord</a>
+      </div>
+    `;
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+});
