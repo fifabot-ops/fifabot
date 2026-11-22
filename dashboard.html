@@ -73,48 +73,56 @@
   <script src="js/supabase-client.js"></script>
   <script>
     (async () => {
-      // 1. Vérifier la connexion
-      const { data, error } = await window.supabaseClient.auth.getUser();
-      if (!data.user) {
-        window.location.href = 'login.html';
-        return;
-      }
-      
-      // 2. Afficher les infos de base
-      const email = data.user.email;
-      const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
-      
-      document.getElementById('user-email-display').textContent = email;
-      document.getElementById('user-name-display').innerHTML = `${fullName} <span style="color: var(--accent);">.</span>`;
+      try {
+        // 1. Vérifier la connexion
+        const { data, error } = await window.supabaseClient.auth.getUser();
+        if (!data || !data.user) {
+          window.location.href = 'login.html';
+          return;
+        }
+        
+        // 2. Afficher les infos de base
+        const email = data.user.email;
+        const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
+        
+        document.getElementById('user-email-display').textContent = email;
+        document.getElementById('user-name-display').innerHTML = `${fullName} <span style="color: var(--accent);">.</span>`;
 
-      // 3. Vérifier le rôle (Admin ou non)
-      const { data: profile } = await window.supabaseClient
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single();
-      
-      if (profile && profile.role === 'admin') {
-        document.getElementById('admin-link').style.display = 'block';
-      }
+        // 3. Vérifier le rôle (Admin ou non)
+        const { data: profile, error: profileError } = await window.supabaseClient
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (profileError) {
+          console.error("Erreur lecture profil:", profileError);
+          alert("Erreur de lecture du profil : " + profileError.message + "\nVérifiez les permissions dans Supabase.");
+        } else if (profile && profile.role === 'admin') {
+          document.getElementById('admin-link').style.display = 'block';
+        }
 
-      // 4. Vérifier le statut de l'abonnement (basé sur les demandes de paiement approuvées)
-      const { data: payments } = await window.supabaseClient
-        .from('payment_requests')
-        .select('status')
-        .eq('user_id', data.user.id)
-        .eq('status', 'approved');
+        // 4. Vérifier le statut de l'abonnement
+        const { data: payments } = await window.supabaseClient
+          .from('payment_requests')
+          .select('status')
+          .eq('user_id', data.user.id)
+          .eq('status', 'approved');
 
-      const statusBadge = document.getElementById('sub-status');
-      
-      if (payments && payments.length > 0) {
-        statusBadge.textContent = 'Premium Actif';
-        statusBadge.style.background = '#D1FAE5'; // Vert clair
-        statusBadge.style.color = '#065F46'; // Vert foncé
-      } else {
-        statusBadge.textContent = 'En attente';
-        statusBadge.style.background = '#FEF3C7'; // Jaune clair
-        statusBadge.style.color = '#92400E'; // Jaune foncé
+        const statusBadge = document.getElementById('sub-status');
+        
+        if (payments && payments.length > 0) {
+          statusBadge.textContent = 'Premium Actif';
+          statusBadge.style.background = '#D1FAE5';
+          statusBadge.style.color = '#065F46';
+        } else {
+          statusBadge.textContent = 'En attente';
+          statusBadge.style.background = '#FEF3C7';
+          statusBadge.style.color = '#92400E';
+        }
+      } catch (err) {
+        console.error("Erreur critique dashboard:", err);
+        alert("Erreur critique : " + err.message);
       }
     })();
 
