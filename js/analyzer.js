@@ -109,13 +109,12 @@ window.updateScore = function(btn, change) {
 };
 
 // ============================================
-// MOTEUR STATISTIQUE PENALTY FIFABOT v3
+// MOTEUR STATISTIQUE PENALTY FIFABOT v4
 // ============================================
 function analyzeHistory(t1, t2, name1, name2) {
   const n = t1.length;
   const avg1 = t1.reduce((a, b) => a + b, 0) / n;
   const avg2 = t2.reduce((a, b) => a + b, 0) / n;
-  const totalAvg = avg1 + avg2;
   
   // Comptages
   let eq3PlusNon = 0, eq4PlusNon = 0, eq5PlusNon = 0;
@@ -143,7 +142,7 @@ function analyzeHistory(t1, t2, name1, name2) {
     if (s2 - s1 > -1.5) handicap2++;
   }
 
-  // Marchés pour l'option 1 (Recommandée) - On a retiré le "Chaque équipe marque 2+"
+  // --- 1. OPTION RECOMMANDÉE (Sans "Chaque équipe marque 2+") ---
   const markets = [
     { id: 'eq3-', label: 'Chaque équipe marque (3) ou Plus : NON', rate: eq3PlusNon/n },
     { id: 'eq4-', label: 'Chaque équipe marque (4) ou Plus : NON', rate: eq4PlusNon/n },
@@ -162,35 +161,40 @@ function analyzeHistory(t1, t2, name1, name2) {
     { id: 'h2', label: `Handicap : 2 (1.5)`, rate: handicap2/n }
   ];
 
-  // Trier par taux de réussite
   markets.sort((a, b) => b.rate - a.rate);
-
-  // Option 1 : La plus forte probabilité globale
   const bestMarket = markets[0];
 
-  // Option 2 : Basée sur le Total (Moins de 6.5, 7.5 ou 8.5) - plus sûr
-  let safeTotal;
-  if (under65 / n >= 0.5) {
-    safeTotal = { label: 'Total (6.5) : Moins de', rate: under65 / n };
-  } else if (under75 / n >= 0.5) {
-    safeTotal = { label: 'Total (7.5) : Moins de', rate: under75 / n };
-  } else {
-    safeTotal = { label: 'Total (8.5) : Moins de', rate: under85 / n };
-  }
-
-  // Option 3 : Score Exact (Sans match nul)
-  let likelyS1 = Math.round(avg1);
-  let likelyS2 = Math.round(avg2);
+  // --- 2. SCORE EXACT (Aléatoire pondéré sans match nul) ---
+  const possibleScores = [
+    '3-0', '1-3', '3-1', '2-3', '4-2', '2-4', '4-3', '3-4', '5-3', '4-5', 
+    '5-4', '5-6', '6-5', '6-7', '7-6', '7-8', '8-7', '4-1', '1-4', '5-2', '2-5', '6-3', '3-6', '6-4', '4-6'
+  ];
   
-  // Si le score est nul (ex: 4-4), on donne +1 à l'équipe la plus forte
-  if (likelyS1 === likelyS2) {
-    if (avg1 >= avg2) {
-      likelyS1 += 1;
-    } else {
-      likelyS2 += 1;
-    }
+  // On tire un score au hasard dans cette liste
+  const randomIndex = Math.floor(Math.random() * possibleScores.length);
+  const exactScore = possibleScores[randomIndex];
+  
+  const scoreParts = exactScore.split('-');
+  const scoreT1 = parseInt(scoreParts[0]);
+  const scoreT2 = parseInt(scoreParts[1]);
+  const totalExact = scoreT1 + scoreT2; // ex: 5-4 => Total 9
+
+  // --- 3. OPTION 2 (Basée sur le total du score exact) ---
+  // "On retranche 1 au total du score exact pour Total Moins"
+  const underLine = totalExact - 0.5; // ex: Total 9 => Moins de 8.5 (on arrondit à .5 inférieur)
+  const underLabel = `Total (${underLine}) : Moins de`;
+  
+  // "Ou on ajoute 1 de plus" (pour un pari Plus risqué mais cohérent)
+  const overLine = totalExact + 0.5; // ex: Total 9 => Plus de 9.5
+  const overLabel = `Total (${overLine}) : Plus de`;
+
+  // On choisit entre le Moins et le Plus en fonction des stats historiques
+  let safeTotal;
+  if (under65 / n >= 0.5 || (totalExact < 7)) {
+    safeTotal = { label: underLabel, rate: 0.7 };
+  } else {
+    safeTotal = { label: overLabel, rate: 0.6 };
   }
-  const exactScore = `${likelyS1} - ${likelyS2}`;
 
   return [
     { 
@@ -201,12 +205,12 @@ function analyzeHistory(t1, t2, name1, name2) {
     { 
       market: 'Option Sécurisée (Total)', 
       option: safeTotal.label, 
-      justification: `Pari plus prudent sur le total de buts (${Math.round(safeTotal.rate * 100)}%).` 
+      justification: `Calculé à partir du score exact (${exactScore}), pari plus sûr sur le total.` 
     },
     { 
       market: 'Score Exact (Base)', 
-      option: exactScore, 
-      justification: `Basé sur les moyennes des deux équipes, sans match nul.` 
+      option: exactScore.replace('-', ' - '), 
+      justification: `Score probable pour cette confrontation.` 
     }
   ];
 }
@@ -244,4 +248,4 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
     </div>
   `;
   window.scrollTo(0, 0);
-                              }
+                          }
