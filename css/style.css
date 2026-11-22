@@ -1,531 +1,59 @@
-/* ============================================
-   FIFABOT — Design System Premium v2
-   ============================================ */
-
-:root {
-  --electric-blue: #007FFF;
-  --sky-blue: #66CCFF;
-  --ice-white: #F0F8FF;
-  --secondary-blue: #1E90FF;
-  --bg-main: #080D18;
-  --bg-card: #111B2B;
-  --text-main: #FFFFFF;
-  --text-secondary: #94A3B8;
-  --border: #233247;
-  --glow: rgba(0, 127, 255, 0.4);
-  --success: #4ade80;
-  --warning: #fbbf24;
-  --danger: #ff6b6b;
+/* ----- BOTTOM NAVIGATION BAR (Style App Mobile) ----- */
+.app-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 12px 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  z-index: 1000;
+  padding-bottom: env(safe-area-inset-bottom, 12px); /* Pour les iPhone avec encoche */
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  min-height: 100vh;
+.nav-item {
   display: flex;
   flex-direction: column;
-  -webkit-font-smoothing: antialiased;
-  background-image:
-    radial-gradient(circle at 20% 0%, rgba(0, 127, 255, 0.15), transparent 40%),
-    radial-gradient(circle at 80% 100%, rgba(102, 204, 255, 0.08), transparent 40%);
-  background-attachment: fixed;
-}
-
-/* ----- Animations ----- */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 20px var(--glow); }
-  50% { box-shadow: 0 0 30px var(--glow); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
-}
-
-.fade-in {
-  animation: fadeInUp 0.4s ease-out;
-}
-
-/* ----- Navigation ----- */
-.navbar {
-  background-color: rgba(17, 27, 43, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  padding: 14px 20px;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.navbar-logo {
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--electric-blue);
   text-decoration: none;
-  letter-spacing: 1.5px;
-  background: linear-gradient(135deg, var(--electric-blue), var(--sky-blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.navbar-links {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.navbar-links a {
   color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: color 0.2s;
+  font-size: 11px;
+  font-weight: 600;
+  gap: 4px;
+  transition: all 0.2s;
 }
 
-.navbar-links a:hover {
-  color: var(--electric-blue);
+.nav-item svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
 }
 
-/* ----- Conteneur principal ----- */
-.main-container {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+.nav-item.active {
+  color: var(--primary);
 }
 
-/* ----- Carte ----- */
-.card {
-  background: linear-gradient(135deg, rgba(17, 27, 43, 0.95), rgba(17, 27, 43, 0.7));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 28px 22px;
-  width: 100%;
-  max-width: 460px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 127, 255, 0.05);
-  animation: fadeInUp 0.4s ease-out;
+/* Ajustement du corps de page pour ne pas cacher le contenu sous la barre */
+body {
+  padding-bottom: 80px;
 }
 
-.card-title {
-  font-size: 24px;
+/* Style pour l'en-tête de l'app */
+.app-header {
+  padding: 24px 20px 10px 20px;
+  background-color: var(--bg-main);
+}
+
+.app-header h1 {
+  font-size: 28px;
   font-weight: 800;
-  margin-bottom: 8px;
   color: var(--text-main);
   letter-spacing: -0.5px;
 }
-
-.card-subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-bottom: 24px;
-}
-
-/* ----- Formulaires ----- */
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 14px 16px;
-  background-color: rgba(8, 13, 24, 0.7);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--text-main);
-  font-size: 15px;
-  outline: none;
-  transition: all 0.2s;
-}
-
-.form-group input:focus {
-  border-color: var(--electric-blue);
-  box-shadow: 0 0 0 3px rgba(0, 127, 255, 0.15);
-}
-
-.form-group input::placeholder {
-  color: rgba(148, 163, 184, 0.5);
-}
-
-/* ----- Boutons ----- */
-.btn {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 0.3px;
-  display: inline-block;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--electric-blue), var(--secondary-blue));
-  color: white;
-  box-shadow: 0 4px 16px rgba(0, 127, 255, 0.3);
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(0, 127, 255, 0.5);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ----- Messages ----- */
-.message {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  display: none;
-  font-weight: 500;
-}
-
-.message.info, .message.error, .message.success {
-  display: block;
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.message.info {
-  background-color: rgba(102, 204, 255, 0.1);
-  color: var(--sky-blue);
-  border: 1px solid rgba(102, 204, 255, 0.3);
-}
-
-.message.error {
-  background-color: rgba(255, 80, 80, 0.1);
-  color: var(--danger);
-  border: 1px solid rgba(255, 80, 80, 0.3);
-}
-
-.message.success {
-  background-color: rgba(80, 220, 120, 0.1);
-  color: var(--success);
-  border: 1px solid rgba(80, 220, 120, 0.3);
-}
-
-/* ----- Liens ----- */
-.link {
-  color: var(--electric-blue);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
-/* ----- Héro ----- */
-.hero {
-  text-align: center;
-  padding: 60px 20px;
-  max-width: 800px;
-  animation: fadeInUp 0.5s ease-out;
-}
-
-.hero h1 {
-  font-size: 32px;
-  font-weight: 900;
-  margin-bottom: 16px;
-  letter-spacing: -1px;
-  line-height: 1.2;
-  background: linear-gradient(135deg, var(--electric-blue) 0%, var(--sky-blue) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hero p {
-  color: var(--text-secondary);
-  font-size: 16px;
-  margin-bottom: 32px;
-  line-height: 1.6;
-}
-
-.hero-buttons {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.hero-buttons .btn {
-  width: auto;
-  padding: 14px 28px;
-}
-
-/* ----- Boutons de filtre ----- */
-.filter-btn {
-  padding: 8px 18px;
-  background-color: rgba(17, 27, 43, 0.8);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.filter-btn:hover {
-  border-color: var(--electric-blue);
-  color: var(--electric-blue);
-}
-
-.filter-btn.active {
-  background: linear-gradient(135deg, var(--electric-blue), var(--secondary-blue));
-  border-color: var(--electric-blue);
-  color: white;
-  box-shadow: 0 4px 16px rgba(0, 127, 255, 0.3);
-}
-
-/* ----- Cartes de compétition ----- */
-.competition-card {
-  background: linear-gradient(135deg, rgba(17, 27, 43, 0.95), rgba(17, 27, 43, 0.7));
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.competition-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--electric-blue), var(--sky-blue));
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.competition-card:hover {
-  border-color: var(--electric-blue);
-  box-shadow: 0 10px 40px rgba(0, 127, 255, 0.2);
-  transform: translateY(-4px);
-}
-
-.competition-card:hover::before {
-  opacity: 1;
-}
-
-.competition-badge {
-  display: inline-block;
-  background: linear-gradient(135deg, rgba(0, 127, 255, 0.2), rgba(102, 204, 255, 0.1));
-  color: var(--sky-blue);
-  font-size: 11px;
-  font-weight: 800;
-  padding: 5px 12px;
-  border-radius: 8px;
-  margin-bottom: 14px;
-  align-self: flex-start;
-  letter-spacing: 0.5px;
-  border: 1px solid rgba(0, 127, 255, 0.3);
-}
-
-.competition-name {
-  font-size: 18px;
-  font-weight: 800;
-  margin-bottom: 6px;
-  color: var(--text-main);
-  letter-spacing: -0.3px;
-}
-
-.competition-meta {
-  font-size: 13px;
-  color: var(--sky-blue);
-  margin-bottom: 12px;
-  font-weight: 600;
-}
-
-.competition-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 16px;
-  flex: 1;
-  line-height: 1.5;
-}
-
-/* ----- Stats grid (rapport) ----- */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.stat-box {
-  background-color: rgba(8, 13, 24, 0.6);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--electric-blue);
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 11px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-/* ----- Propositions ----- */
-.proposition-card {
-  background: linear-gradient(135deg, rgba(0, 127, 255, 0.08), rgba(17, 27, 43, 0.9));
-  border: 1px solid rgba(0, 127, 255, 0.4);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 14px;
-  position: relative;
-  animation: fadeInUp 0.4s ease-out;
-}
-
-.proposition-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.proposition-number {
-  background: linear-gradient(135deg, var(--electric-blue), var(--secondary-blue));
-  color: white;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 5px 12px;
-  border-radius: 8px;
-  letter-spacing: 1px;
-}
-
-.proposition-frequency {
-  color: var(--sky-blue);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.proposition-market {
-  font-size: 13px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.proposition-option {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--electric-blue);
-  margin-bottom: 10px;
-  letter-spacing: -0.3px;
-}
-
-.proposition-justification {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-/* ----- Historique matchs ----- */
-.match-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
-}
-
-.match-row:last-child {
-  border-bottom: none;
-}
-
-.match-team {
-  flex: 1;
-  color: var(--text-main);
-  font-weight: 600;
-}
-
-.match-score {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--electric-blue);
-  padding: 0 12px;
-}
-
-/* ----- Responsive ----- */
-@media (max-width: 480px) {
-  .hero h1 {
-    font-size: 26px;
-  }
-  .card {
-    padding: 22px 18px;
-  }
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .navbar {
-    padding: 12px 16px;
-  }
-  .navbar-links {
-    gap: 10px;
-  }
-   }
