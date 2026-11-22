@@ -109,44 +109,52 @@ window.updateScore = function(btn, change) {
 };
 
 // ============================================
-// MOTEUR STATISTIQUE PENALTY FIFABOT v4
+// MOTEUR STATISTIQUE PENALTY FIFABOT v5 (Cohérence totale)
 // ============================================
 function analyzeHistory(t1, t2, name1, name2) {
   const n = t1.length;
   const avg1 = t1.reduce((a, b) => a + b, 0) / n;
   const avg2 = t2.reduce((a, b) => a + b, 0) / n;
   
-  // Comptages
-  let eq3PlusNon = 0, eq4PlusNon = 0, eq5PlusNon = 0;
+  // --- 1. GÉNÉRATION DU SCORE EXACT EN PREMIER ---
+  // On crée une liste de scores possibles en fonction des moyennes des équipes
+  const baseScore1 = Math.round(avg1);
+  const baseScore2 = Math.round(avg2);
+  
+  // On génère un score autour de ces moyennes (pour éviter le hasard total)
+  let finalScore1 = baseScore1 + Math.floor(Math.random() * 3) - 1; // -1, 0 ou +1
+  let finalScore2 = baseScore2 + Math.floor(Math.random() * 3) - 1;
+  
+  // Sécurité : minimum 0 but, et pas de match nul (on donne +1 à une équipe)
+  if (finalScore1 < 0) finalScore1 = 0;
+  if (finalScore2 < 0) finalScore2 = 0;
+  if (finalScore1 === finalScore2) {
+    if (Math.random() > 0.5) finalScore1++; else finalScore2++;
+  }
+  
+  const exactScore = `${finalScore1} - ${finalScore2}`;
+  const totalExact = finalScore1 + finalScore2;
+
+  // --- 2. CALCUL DES PROBABILITÉS HISTORIQUES ---
+  let eq3PlusOui = 0, eq3PlusNon = 0;
   let over65 = 0, under65 = 0, over75 = 0, under75 = 0, over85 = 0, under85 = 0;
   let t1Over35 = 0, t1Under25 = 0, t2Over35 = 0, t2Under25 = 0;
-  let handicap1 = 0, handicap2 = 0;
 
   for (let i = 0; i < n; i++) {
     const s1 = t1[i], s2 = t2[i], total = s1 + s2;
     
-    if (s1 < 3 || s2 < 3) eq3PlusNon++;
-    if (s1 < 4 || s2 < 4) eq4PlusNon++;
-    if (s1 < 5 || s2 < 5) eq5PlusNon++;
-    
+    if (s1 >= 3 && s2 >= 3) eq3PlusOui++; else eq3PlusNon++;
     if (total > 6.5) over65++; else under65++;
     if (total > 7.5) over75++; else under75++;
     if (total > 8.5) over85++; else under85++;
     
-    if (s1 > 3.5) t1Over35++;
-    if (s1 < 2.5) t1Under25++;
-    if (s2 > 3.5) t2Over35++;
-    if (s2 < 2.5) t2Under25++;
-    
-    if (s1 - s2 > 1.5) handicap1++;
-    if (s2 - s1 > -1.5) handicap2++;
+    if (s1 > 3.5) t1Over35++; else t1Under25++;
+    if (s2 > 3.5) t2Over35++; else t2Under25++;
   }
 
-  // --- 1. OPTION RECOMMANDÉE (Sans "Chaque équipe marque 2+") ---
   const markets = [
+    { id: 'eq3+', label: 'Chaque équipe marque (3) ou Plus : OUI', rate: eq3PlusOui/n },
     { id: 'eq3-', label: 'Chaque équipe marque (3) ou Plus : NON', rate: eq3PlusNon/n },
-    { id: 'eq4-', label: 'Chaque équipe marque (4) ou Plus : NON', rate: eq4PlusNon/n },
-    { id: 'eq5-', label: 'Chaque équipe marque (5) ou Plus : NON', rate: eq5PlusNon/n },
     { id: 'o65', label: 'Total (6.5) : Plus de', rate: over65/n },
     { id: 'u65', label: 'Total (6.5) : Moins de', rate: under65/n },
     { id: 'o75', label: 'Total (7.5) : Plus de', rate: over75/n },
@@ -156,61 +164,69 @@ function analyzeHistory(t1, t2, name1, name2) {
     { id: 't1o35', label: `Total 1 (3.5) : Plus de`, rate: t1Over35/n },
     { id: 't1u25', label: `Total 1 (2.5) : Moins de`, rate: t1Under25/n },
     { id: 't2o35', label: `Total 2 (3.5) : Plus de`, rate: t2Over35/n },
-    { id: 't2u25', label: `Total 2 (2.5) : Moins de`, rate: t2Under25/n },
-    { id: 'h1', label: `Handicap : 1 (-1.5)`, rate: handicap1/n },
-    { id: 'h2', label: `Handicap : 2 (1.5)`, rate: handicap2/n }
+    { id: 't2u25', label: `Total 2 (2.5) : Moins de`, rate: t2Under25/n }
   ];
 
   markets.sort((a, b) => b.rate - a.rate);
-  const bestMarket = markets[0];
 
-  // --- 2. SCORE EXACT (Aléatoire pondéré sans match nul) ---
-  const possibleScores = [
-    '3-0', '1-3', '3-1', '2-3', '4-2', '2-4', '4-3', '3-4', '5-3', '4-5', 
-    '5-4', '5-6', '6-5', '6-7', '7-6', '7-8', '8-7', '4-1', '1-4', '5-2', '2-5', '6-3', '3-6', '6-4', '4-6'
-  ];
+  // --- 3. FILTRAGE DES OPTIONS EN FONCTION DU SCORE EXACT ---
   
-  // On tire un score au hasard dans cette liste
-  const randomIndex = Math.floor(Math.random() * possibleScores.length);
-  const exactScore = possibleScores[randomIndex];
-  
-  const scoreParts = exactScore.split('-');
-  const scoreT1 = parseInt(scoreParts[0]);
-  const scoreT2 = parseInt(scoreParts[1]);
-  const totalExact = scoreT1 + scoreT2; // ex: 5-4 => Total 9
+  // Option 1 : On cherche le meilleur marché qui est VRAI pour ce score exact.
+  let bestMarket = null;
+  for (const market of markets) {
+    let isValidForScore = true;
+    
+    // On vérifie si le marché est logique par rapport au score généré
+    if (market.id === 'eq3+' && (finalScore1 < 3 || finalScore2 < 3)) isValidForScore = false;
+    if (market.id === 'eq3-' && (finalScore1 >= 3 && finalScore2 >= 3)) isValidForScore = false;
+    if (market.id === 'o65' && totalExact <= 6.5) isValidForScore = false;
+    if (market.id === 'u65' && totalExact >= 6.5) isValidForScore = false;
+    if (market.id === 'o75' && totalExact <= 7.5) isValidForScore = false;
+    if (market.id === 'u75' && totalExact >= 7.5) isValidForScore = false;
+    if (market.id === 'o85' && totalExact <= 8.5) isValidForScore = false;
+    if (market.id === 'u85' && totalExact >= 8.5) isValidForScore = false;
+    if (market.id === 't1o35' && finalScore1 <= 3.5) isValidForScore = false;
+    if (market.id === 't1u25' && finalScore1 >= 2.5) isValidForScore = false;
+    if (market.id === 't2o35' && finalScore2 <= 3.5) isValidForScore = false;
+    if (market.id === 't2u25' && finalScore2 >= 2.5) isValidForScore = false;
 
-  // --- 3. OPTION 2 (Basée sur le total du score exact) ---
-  // "On retranche 1 au total du score exact pour Total Moins"
-  const underLine = totalExact - 0.5; // ex: Total 9 => Moins de 8.5 (on arrondit à .5 inférieur)
-  const underLabel = `Total (${underLine}) : Moins de`;
+    if (isValidForScore) {
+      bestMarket = market;
+      break; // On a trouvé la meilleure option cohérente
+    }
+  }
   
-  // "Ou on ajoute 1 de plus" (pour un pari Plus risqué mais cohérent)
-  const overLine = totalExact + 0.5; // ex: Total 9 => Plus de 9.5
-  const overLabel = `Total (${overLine}) : Plus de`;
+  // Sécurité si aucun marché ne correspond (très rare)
+  if (!bestMarket) bestMarket = { label: 'Total (6.5) : Moins de', rate: under65/n };
 
-  // On choisit entre le Moins et le Plus en fonction des stats historiques
+  // Option 2 : Basée sur le total du score exact
+  // On retranche 1 pour sécuriser (ex: Total 9 => Moins de 8.5)
+  const underLine = totalExact - 0.5;
+  const overLine = totalExact + 0.5;
+  
   let safeTotal;
-  if (under65 / n >= 0.5 || (totalExact < 7)) {
-    safeTotal = { label: underLabel, rate: 0.7 };
+  // On choisit en fonction de ce qui est le plus probable historiquement
+  if (under65 / n >= 0.5 || totalExact <= 7) {
+    safeTotal = { label: `Total (${underLine}) : Moins de`, rate: 0.75 };
   } else {
-    safeTotal = { label: overLabel, rate: 0.6 };
+    safeTotal = { label: `Total (${overLine}) : Plus de`, rate: 0.65 };
   }
 
   return [
     { 
       market: 'Recommandation FIFABOT', 
       option: bestMarket.label, 
-      justification: `La plus forte probabilité historique (${Math.round(bestMarket.rate * 100)}%).` 
+      justification: `Cohérent avec le score exact (${exactScore}) et fort historiquement.` 
     },
     { 
       market: 'Option Sécurisée (Total)', 
       option: safeTotal.label, 
-      justification: `Calculé à partir du score exact (${exactScore}), pari plus sûr sur le total.` 
+      justification: `Pari plus prudent, calculé par rapport au score exact.` 
     },
     { 
       market: 'Score Exact (Base)', 
-      option: exactScore.replace('-', ' - '), 
-      justification: `Score probable pour cette confrontation.` 
+      option: exactScore, 
+      justification: `Score probable pour cette confrontation (Sans match nul).` 
     }
   ];
 }
@@ -248,4 +264,4 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
     </div>
   `;
   window.scrollTo(0, 0);
-                          }
+      }
