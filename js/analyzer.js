@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
-    // --- METTRE A JOUR LES TITRES DES COLONNES QUAND ON TAPE LES NOMS ---
+    // Mettre à jour les titres des colonnes quand on tape les noms
     document.getElementById('team1-name').addEventListener('input', (e) => {
       document.getElementById('team1-title').textContent = e.target.value.toUpperCase() || 'ÉQUIPE 1';
     });
@@ -210,14 +210,8 @@ function showResults(competition, name1, name2, stats, propositions) {
   document.getElementById('analyzer-form').style.display = 'none';
   results.style.display = 'block';
 
-  const matchRows = stats.scores.map((s, i) => `
-    <div class="match-row">
-      <span class="match-team" style="text-align:right;">${name1}</span>
-      <span class="match-score">${s.t1} - ${s.t2}</span>
-      <span class="match-team" style="text-align:left;">${name2}</span>
-    </div>
-  `).join('');
-
+  // On a supprimé le bloc HTML qui affichait l'historique des matchs (matchRows)
+  
   const propsHtml = propositions.length > 0
     ? propositions.map((p, i) => `
       <div class="proposition-card">
@@ -233,37 +227,52 @@ function showResults(competition, name1, name2, stats, propositions) {
     : '<p style="color:var(--text-secondary); text-align:center;">Pas assez de données pour formuler des propositions.</p>';
 
   results.innerHTML = `
-    <div class="card" style="margin-bottom:16px;">
-      <h2 style="font-size:22px; margin-bottom:8px; font-weight:800;">Rapport d'analyse</h2>
-      <p style="color:var(--primary); font-size:16px; font-weight:800;">${name1} vs ${name2}</p>
+    <div class="card" style="margin-bottom:16px; text-align:center;">
+      <p style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">Rapport d'analyse</p>
+      <h2 style="font-size:24px; font-weight:800; margin-bottom:4px;">
+        <span style="color:var(--primary);">${name1}</span> 
+        <span style="color:var(--text-secondary); font-size:16px; font-weight:600;">vs</span> 
+        <span style="color:var(--accent);">${name2}</span>
+      </h2>
       <p style="color:var(--text-secondary); font-size:13px;">${competition.name}</p>
     </div>
     
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-size:14px; margin-bottom:14px; text-transform:uppercase; font-weight:800; color:var(--text-secondary);">Historique</h3>
-      ${matchRows}
-    </div>
-    
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="font-size:14px; margin-bottom:14px; text-transform:uppercase; font-weight:800; color:var(--text-secondary);">Statistiques</h3>
+    <!-- BLOC STATISTIQUES -->
+    <div class="card" style="margin-bottom:20px;">
+      <h3 style="font-size:14px; margin-bottom:16px; text-transform:uppercase; font-weight:800; color:var(--text-secondary);">Statistiques clés</h3>
       <div class="stats-grid">
-        <div class="stat-box"><div class="stat-value">${stats.avg1.toFixed(1)}</div><div class="stat-label">Moy. ${name1}</div></div>
-        <div class="stat-box"><div class="stat-value">${stats.avg2.toFixed(1)}</div><div class="stat-label">Moy. ${name2}</div></div>
-        <div class="stat-box"><div class="stat-value">${stats.avgTotal.toFixed(1)}</div><div class="stat-label">Total moyen</div></div>
-        <div class="stat-box"><div class="stat-value">${stats.btts}/${stats.n}</div><div class="stat-label">BTTS</div></div>
+        <div class="stat-box">
+          <div class="stat-value">${stats.avg1.toFixed(1)}</div>
+          <div class="stat-label">Moy. ${name1}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">${stats.avg2.toFixed(1)}</div>
+          <div class="stat-label">Moy. ${name2}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">${stats.avgTotal.toFixed(1)}</div>
+          <div class="stat-label">Total moyen</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value">${stats.btts}/${stats.n}</div>
+          <div class="stat-label">BTTS</div>
+        </div>
       </div>
     </div>
     
-    <h3 style="font-size:18px; margin:24px 0 16px 0; font-weight:800;">⚡ Propositions</h3>
+    <!-- BLOC PROPOSITIONS -->
+    <h3 style="font-size:18px; margin:24px 0 16px 0; font-weight:800; text-align:center;">⚡ Nos Propositions</h3>
     ${propsHtml}
     
     <p style="color:var(--text-secondary); font-size:12px; margin-top:20px; text-align:center; line-height:1.5;">
       ⚠️ Basé sur les fréquences historiques. Aucun résultat futur n'est garanti.
     </p>
     
-    <div style="display:flex; gap:12px; margin-top:20px; margin-bottom:24px;">
+    <div style="display:flex; gap:12px; margin-top:24px; margin-bottom:24px;">
       <a href="competitions.html" class="btn btn-primary" style="text-align:center; text-decoration:none; flex:1;">Nouvelle analyse</a>
     </div>
   `;
+  
+  // Remonter en haut de la page instantanément
   window.scrollTo(0, 0);
-}
+      }
