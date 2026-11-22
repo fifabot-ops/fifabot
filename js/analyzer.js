@@ -4,12 +4,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     const metaEl = document.getElementById('competition-meta');
     const form = document.getElementById('analyzer-form');
 
+    // 1. Vérifier la connexion
     const { data: userData, error: authError } = await window.supabaseClient.auth.getUser();
     if (authError || !userData.user) {
       window.location.href = 'login.html';
       return;
     }
 
+    // 2. VÉRIFICATION PREMIUM (Sécurité)
+    const { data: payments } = await window.supabaseClient
+      .from('payment_requests')
+      .select('status')
+      .eq('user_id', userData.user.id)
+      .eq('status', 'approved');
+
+    if (!payments || payments.length === 0) {
+      // L'utilisateur n'a pas d'abonnement actif, on le redirige vers la page de paiement
+      window.location.href = 'pricing.html';
+      return;
+    }
+
+    // 3. Récupérer l'ID de l'URL
     const urlParams = new URLSearchParams(window.location.search);
     const competitionId = urlParams.get('competition');
 
@@ -19,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // 4. Charger la compétition
     const { data: competition, error: compError } = await window.supabaseClient
       .from('competitions')
       .select('id, name, mode, format, games (name, version)')
@@ -210,8 +226,6 @@ function showResults(competition, name1, name2, stats, propositions) {
   document.getElementById('analyzer-form').style.display = 'none';
   results.style.display = 'block';
 
-  // On a supprimé le bloc HTML qui affichait l'historique des matchs (matchRows)
-  
   const propsHtml = propositions.length > 0
     ? propositions.map((p, i) => `
       <div class="proposition-card">
@@ -237,7 +251,6 @@ function showResults(competition, name1, name2, stats, propositions) {
       <p style="color:var(--text-secondary); font-size:13px;">${competition.name}</p>
     </div>
     
-    <!-- BLOC STATISTIQUES -->
     <div class="card" style="margin-bottom:20px;">
       <h3 style="font-size:14px; margin-bottom:16px; text-transform:uppercase; font-weight:800; color:var(--text-secondary);">Statistiques clés</h3>
       <div class="stats-grid">
@@ -260,7 +273,6 @@ function showResults(competition, name1, name2, stats, propositions) {
       </div>
     </div>
     
-    <!-- BLOC PROPOSITIONS -->
     <h3 style="font-size:18px; margin:24px 0 16px 0; font-weight:800; text-align:center;">⚡ Nos Propositions</h3>
     ${propsHtml}
     
@@ -273,6 +285,5 @@ function showResults(competition, name1, name2, stats, propositions) {
     </div>
   `;
   
-  // Remonter en haut de la page instantanément
   window.scrollTo(0, 0);
-      }
+}
