@@ -14,17 +14,17 @@
     <div class="navbar-links">
       <a href="dashboard.html">Tableau de bord</a>
       <a href="competitions.html">Compétitions</a>
-      <button id="logout-btn" class="btn" style="width:auto; padding:8px 16px; background:transparent; color:var(--text-secondary); border:1px solid var(--border);">Déconnexion</button>
+      <button id="logout-btn" class="btn" style="width:auto; padding:8px 14px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); font-size:13px;">Déconnexion</button>
     </div>
   </nav>
 
-  <main style="padding: 20px; max-width: 800px; margin: 0 auto; width: 100%;">
+  <main style="padding: 20px; max-width: 720px; margin: 0 auto; width: 100%;">
 
     <!-- En-tête -->
-    <div id="header" style="margin-bottom: 24px;">
-      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 4px;">Analyse en cours</p>
-      <h1 id="competition-name" style="font-size: 24px; margin-bottom: 6px;">Chargement...</h1>
-      <p id="competition-meta" style="color: var(--sky-blue); font-size: 14px;"></p>
+    <div id="header" style="margin-bottom: 28px; animation: fadeInUp 0.4s ease-out;">
+      <p style="color: var(--sky-blue); font-size: 12px; margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Analyse en cours</p>
+      <h1 id="competition-name" style="font-size: 26px; margin-bottom: 6px; letter-spacing: -0.5px;">Chargement...</h1>
+      <p id="competition-meta" style="color: var(--text-secondary); font-size: 14px; font-weight: 500;"></p>
     </div>
 
     <!-- Formulaire -->
@@ -32,12 +32,12 @@
 
       <!-- Choix du nombre de matchs -->
       <div class="card" style="max-width:100%; margin-bottom:16px;">
-        <h3 style="font-size:16px; margin-bottom:12px;">Nombre de matchs historiques</h3>
-        <div style="display:flex; gap:16px;">
-          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer;">
+        <h3 style="font-size:15px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--text-secondary);">Nombre de matchs</h3>
+        <div style="display:flex; gap:12px;">
+          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:12px; background:rgba(8,13,24,0.6); border:1px solid var(--border); border-radius:10px; font-weight:600; font-size:14px;">
             <input type="radio" name="match_count" value="4" checked> 4 matchs
           </label>
-          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer;">
+          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:12px; background:rgba(8,13,24,0.6); border:1px solid var(--border); border-radius:10px; font-weight:600; font-size:14px;">
             <input type="radio" name="match_count" value="5"> 5 matchs
           </label>
         </div>
@@ -45,33 +45,33 @@
 
       <!-- Équipe 1 -->
       <div class="card" style="max-width:100%; margin-bottom:16px;">
-        <h3 style="font-size:16px; margin-bottom:12px;">Équipe 1</h3>
+        <h3 style="font-size:15px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--electric-blue);">Équipe 1</h3>
         <div class="form-group">
           <label for="team1-name">Nom de l'équipe</label>
           <input type="text" id="team1-name" placeholder="Ex : PSG" required>
         </div>
-        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
-          Scores de l'équipe 1 (du plus ancien au plus récent) :
+        <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 10px; font-weight: 600;">
+          Buts marqués — du plus ancien au plus récent
         </p>
         <div id="team1-scores"></div>
       </div>
 
       <!-- Équipe 2 -->
       <div class="card" style="max-width:100%; margin-bottom:16px;">
-        <h3 style="font-size:16px; margin-bottom:12px;">Équipe 2</h3>
+        <h3 style="font-size:15px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--electric-blue);">Équipe 2</h3>
         <div class="form-group">
           <label for="team2-name">Nom de l'équipe</label>
           <input type="text" id="team2-name" placeholder="Ex : Marseille" required>
         </div>
-        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">
-          Scores de l'équipe 2 (du plus ancien au plus récent) :
+        <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 10px; font-weight: 600;">
+          Buts marqués — du plus ancien au plus récent
         </p>
         <div id="team2-scores"></div>
       </div>
 
       <!-- Bouton -->
       <button type="submit" class="btn btn-primary" style="margin-bottom:16px;">
-        Lancer l'analyse
+        ⚡ Lancer l'analyse
       </button>
       <div id="message" class="message"></div>
     </form>
