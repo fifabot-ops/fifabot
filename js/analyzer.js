@@ -4,14 +4,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const metaEl = document.getElementById('competition-meta');
     const form = document.getElementById('analyzer-form');
 
-    // 1. Vérifier la connexion
     const { data: userData, error: authError } = await window.supabaseClient.auth.getUser();
     if (authError || !userData.user) {
       window.location.href = 'login.html';
       return;
     }
 
-    // 2. Récupérer l'ID de l'URL
     const urlParams = new URLSearchParams(window.location.search);
     const competitionId = urlParams.get('competition');
 
@@ -21,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 3. Charger la compétition
     const { data: competition, error: compError } = await window.supabaseClient
       .from('competitions')
       .select('id, name, mode, format, games (name, version)')
@@ -34,14 +31,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 4. Afficher les infos
     const game = competition.games || {};
     nameEl.innerHTML = `${competition.name} <span style="color: var(--accent);">.</span>`;
-    metaEl.textContent = `${game.name || ''} ${game.version || ''} • ${competition.mode} • ${competition.format || ''}`;
+    metaEl.textContent = `${game.name || ''} ${game.version || ''} • ${competition.mode}`;
     
     form.style.display = 'block';
 
-    // --- GESTION DYNAMIQUE DU FORMULAIRE (BOUTONS + / -) ---
+    // --- GESTION DYNAMIQUE DU FORMULAIRE EN 2 COLONNES ---
     function generateScoreFields(count) {
       for (const teamNum of [1, 2]) {
         const container = document.getElementById(`team${teamNum}-scores`);
@@ -50,21 +46,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         for (let i = 1; i <= count; i++) {
           container.innerHTML += `
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; background:var(--bg-main); padding:10px 16px; border-radius:16px;">
-              <span style="color:var(--text-secondary); font-size:14px; font-weight:700;">Séance ${i}</span>
+            <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:16px;">
+              <span style="color:var(--text-secondary); font-size:11px; font-weight:700; margin-bottom:6px;">Séance ${i}</span>
               
-              <div style="display:flex; align-items:center; gap:16px;">
+              <div style="display:flex; align-items:center; justify-content:center; gap:8px; background:var(--bg-main); padding:6px; border-radius:24px; width:100%;">
                 <!-- Bouton Moins -->
-                <button type="button" onclick="updateScore(this, -1)" style="width:36px; height:36px; border-radius:50%; background:var(--bg-card); border:none; box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); font-size:20px; font-weight:800; color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center;">−</button>
+                <button type="button" onclick="updateScore(this, -1)" style="width:30px; height:30px; border-radius:50%; background:var(--bg-card); border:none; box-shadow: 2px 2px 4px var(--shadow-dark), -1px -1px 3px var(--shadow-light); font-size:16px; font-weight:800; color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center;">−</button>
                 
                 <!-- Affichage du score -->
                 <input type="number" readonly value="0"
                   data-team="${teamNum}" data-match="${i}"
                   class="score-input"
-                  style="width:40px; background:transparent; border:none; color:var(--text-main); font-size:22px; font-weight:800; text-align:center; outline:none; padding:0; -moz-appearance:textfield;">
+                  style="width:24px; background:transparent; border:none; color:var(--text-main); font-size:18px; font-weight:800; text-align:center; outline:none; padding:0;">
                 
                 <!-- Bouton Plus -->
-                <button type="button" onclick="updateScore(this, 1)" style="width:36px; height:36px; border-radius:50%; background:var(--bg-card); border:none; box-shadow: 2px 2px 5px var(--shadow-dark), -2px -2px 5px var(--shadow-light); font-size:20px; font-weight:800; color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center;">+</button>
+                <button type="button" onclick="updateScore(this, 1)" style="width:30px; height:30px; border-radius:50%; background:var(--bg-card); border:none; box-shadow: 2px 2px 4px var(--shadow-dark), -1px -1px 3px var(--shadow-light); font-size:16px; font-weight:800; color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center;">+</button>
               </div>
             </div>
           `;
@@ -72,17 +68,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Initialiser avec 4 séances par défaut
     generateScoreFields(4);
 
-    // Écouter le changement du bouton radio 4/5 séances
     document.querySelectorAll('input[name="match_count"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
         generateScoreFields(parseInt(e.target.value));
       });
     });
 
-    // --- SOUMISSION DU FORMULAIRE ---
+    // --- METTRE A JOUR LES TITRES DES COLONNES QUAND ON TAPE LES NOMS ---
+    document.getElementById('team1-name').addEventListener('input', (e) => {
+      document.getElementById('team1-title').textContent = e.target.value.toUpperCase() || 'ÉQUIPE 1';
+    });
+    document.getElementById('team2-name').addEventListener('input', (e) => {
+      document.getElementById('team2-title').textContent = e.target.value.toUpperCase() || 'ÉQUIPE 2';
+    });
+
+    // --- SOUMISSION ---
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const messageEl = document.getElementById('message');
@@ -91,7 +93,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const team1Name = document.getElementById('team1-name').value.trim();
       const team2Name = document.getElementById('team2-name').value.trim();
 
-      // Validation
       if (!team1Name || !team2Name) {
         messageEl.textContent = '❌ Veuillez entrer les noms des deux équipes.';
         messageEl.className = 'message error';
@@ -104,7 +105,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // Récupération des scores
       const matchCount = parseInt(document.querySelector('input[name="match_count"]:checked').value);
       const team1Scores = [];
       const team2Scores = [];
@@ -116,15 +116,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         team2Scores.push(parseInt(s2.value));
       }
 
-      // Cacher le message d'erreur
       messageEl.className = 'message';
       messageEl.textContent = '';
 
-      // Calculs
       const stats = computeStats(team1Scores, team2Scores);
       const propositions = generatePropositions(stats, team1Name, team2Name);
       
-      // --- SAUVEGARDE DANS SUPABASE ---
       submitBtn.textContent = 'Enregistrement...';
       submitBtn.disabled = true;
 
@@ -149,11 +146,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     document.getElementById('competition-name').textContent = 'Erreur critique';
     document.getElementById('competition-meta').textContent = err.message;
-    console.error(err);
   }
 });
 
-// --- FONCTION POUR METTRE A JOUR LE SCORE AVEC LES BOUTONS ---
 window.updateScore = function(btn, change) {
   const input = btn.parentElement.querySelector('input');
   let val = parseInt(input.value) || 0;
@@ -163,7 +158,6 @@ window.updateScore = function(btn, change) {
   input.value = val;
 };
 
-// --- MOTEUR D'ANALYSE ---
 function computeStats(t1, t2) {
   const n = t1.length;
   const avg1 = t1.reduce((a, b) => a + b, 0) / n;
@@ -272,4 +266,4 @@ function showResults(competition, name1, name2, stats, propositions) {
     </div>
   `;
   window.scrollTo(0, 0);
-      }
+}
