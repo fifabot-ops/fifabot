@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compétitions — FIFABOT</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-logo">FIFABOT</a>
+    <div class="navbar-links">
+      <a href="dashboard.html">Tableau de bord</a>
+      <button id="logout-btn" class="btn" style="width:auto; padding:8px 16px; background:transparent; color:var(--text-secondary); border:1px solid var(--border);">Déconnexion</button>
+    </div>
+  </nav>
+
+  <main style="padding: 20px; max-width: 1100px; margin: 0 auto; width: 100%;">
+
+    <header style="margin-bottom: 24px;">
+      <h1 style="font-size: 26px; margin-bottom: 8px;">Championnats et compétitions</h1>
+      <p style="color: var(--text-secondary); font-size: 14px;">
+        Sélectionnez un jeu et un championnat pour lancer une analyse.
+      </p>
+    </header>
+
+    <!-- Filtres -->
+    <div id="filters" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+      <button class="filter-btn" data-game="all">Tous</button>
+      <button class="filter-btn" data-game="FC-24">FC 24</button>
+      <button class="filter-btn" data-game="FC-25">FC 25</button>
+      <button class="filter-btn" data-game="FC-26">FC 26</button>
+      <button class="filter-btn" data-game="Simulation-1.0">Simulation</button>
+      <button class="filter-btn" data-game="Penalty-1.0">Penalty</button>
+    </div>
+
+    <!-- Conteneur des compétitions -->
+    <div id="competitions-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+      <p id="loading" style="color: var(--text-secondary);">Chargement des compétitions...</p>
+    </div>
+
+  </main>
+
+  <script src="js/supabase-client.js"></script>
+  <script src="js/competitions.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
