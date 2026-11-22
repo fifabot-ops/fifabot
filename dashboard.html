@@ -2,29 +2,62 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Tableau de bord — FIFABOT</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <nav class="navbar">
-    <a href="index.html" class="navbar-logo">FIFABOT</a>
-    <div class="navbar-links">
-      <button id="logout-btn" class="btn" style="width:auto; padding:8px 16px; background:transparent; color:var(--text-secondary); border:1px solid var(--border);">Déconnexion</button>
-    </div>
-  </nav>
+  <header class="app-header">
+    <p style="color: var(--text-secondary); font-size: 14px; font-weight: 600; margin-bottom: 4px;">Bonjour,</p>
+    <h1 id="user-name-display">Utilisateur <span style="color: var(--accent);">.</span></h1>
+  </header>
 
-  <main class="main-container">
-    <div class="card">
-      <h1 class="card-title">Tableau de bord</h1>
-      <p class="card-subtitle">Bienvenue sur votre espace FIFABOT</p>
-      <p style="color: var(--text-secondary); font-size: 14px;">
-        Connecté en tant que : <strong id="user-email" style="color: var(--electric-blue);">...</strong>
-      </p>
+  <main style="padding: 0 20px; max-width: 800px; margin: 0 auto; width: 100%;">
+    
+    <div class="card" style="margin-top: 20px; display:flex; flex-direction:column; gap: 16px;">
+      <h3 style="font-size: 16px; font-weight: 700;">Statut du compte</h3>
+      <div style="display:flex; justify-content:space-between; align-items:center; background: var(--bg-main); padding: 16px; border-radius: 16px;">
+        <span style="color: var(--text-secondary); font-size: 14px;">Abonnement</span>
+        <span style="background: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px;">En attente</span>
+      </div>
     </div>
+
+    <div style="margin: 24px 0;">
+      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Accès rapide</h2>
+      <a href="competitions.html" class="btn btn-primary" style="text-decoration:none; display:block; text-align:center; margin-bottom:12px;">
+        Nouvelle analyse
+      </a>
+      <a href="history.html" class="btn" style="text-decoration:none; display:block; text-align:center; background: var(--bg-card); color: var(--text-main); box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);">
+        Voir mon historique
+      </a>
+    </div>
+
+    <p style="color: var(--text-secondary); font-size: 13px; text-align:center;">
+      Connecté en tant que : <strong id="user-email-display" style="color: var(--text-main);">...</strong>
+    </p>
+
   </main>
+
+  <nav class="app-bottom-nav">
+    <a href="dashboard.html" class="nav-item active">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      Accueil
+    </a>
+    <a href="competitions.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      Jeux
+    </a>
+    <a href="history.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      Historique
+    </a>
+    <a href="#" id="logout-btn-nav" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      Quitter
+    </a>
+  </nav>
 
   <script src="js/supabase-client.js"></script>
   <script>
@@ -34,9 +67,19 @@
         window.location.href = 'login.html';
         return;
       }
-      document.getElementById('user-email').textContent = data.user.email;
+      
+      const email = data.user.email;
+      const fullName = data.user.user_metadata?.full_name || email.split('@')[0];
+      
+      document.getElementById('user-email-display').textContent = email;
+      document.getElementById('user-name-display').innerHTML = `${fullName} <span style="color: var(--accent);">.</span>`;
     })();
+
+    document.getElementById('logout-btn-nav').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await window.supabaseClient.auth.signOut();
+      window.location.href = 'index.html';
+    });
   </script>
-  <script src="js/auth.js"></script>
 </body>
 </html>
