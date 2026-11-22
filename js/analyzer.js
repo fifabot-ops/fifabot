@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 3. Charger la compétition
+    // 3. Charger la compétition depuis Supabase
     const { data: competition, error: compError } = await window.supabaseClient
       .from('competitions')
       .select('id, name, mode, format, games (name, version)')
@@ -34,43 +34,46 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 4. Afficher les infos
+    // 4. Afficher les infos de la compétition
     const game = competition.games || {};
-    nameEl.textContent = competition.name;
+    nameEl.innerHTML = `${competition.name} <span style="color: var(--accent);">.</span>`;
     metaEl.textContent = `${game.name || ''} ${game.version || ''} • ${competition.mode} • ${competition.format || ''}`;
     
     form.style.display = 'block';
 
-    // --- GESTION DU FORMULAIRE ---
+    // --- GESTION DYNAMIQUE DU FORMULAIRE ---
     function generateScoreFields(count) {
       for (const teamNum of [1, 2]) {
         const container = document.getElementById(`team${teamNum}-scores`);
         if (!container) continue;
         container.innerHTML = '';
+        
         for (let i = 1; i <= count; i++) {
           container.innerHTML += `
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-              <span style="color:var(--text-secondary); font-size:12px; min-width:70px; font-weight:600;">Séance ${i}</span>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+              <span style="color:var(--text-secondary); font-size:13px; font-weight:600;">Séance ${i}</span>
               <input type="number" min="0" max="20" required
                 data-team="${teamNum}" data-match="${i}"
                 class="score-input"
                 placeholder="0"
-                style="width:90px; padding:12px; background:rgba(8,13,24,0.7); border:1px solid var(--border); border-radius:10px; color:var(--text-main); font-size:15px; font-weight:700; text-align:center;">
+                style="width:100px; padding:14px; background:var(--bg-main); border:1px solid transparent; border-radius:12px; color:var(--text-main); font-size:16px; font-weight:700; text-align:center; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
             </div>
           `;
         }
       }
     }
 
+    // Initialiser avec 4 séances par défaut
     generateScoreFields(4);
 
+    // Écouter le changement du bouton radio 4/5 séances
     document.querySelectorAll('input[name="match_count"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
         generateScoreFields(parseInt(e.target.value));
       });
     });
 
-    // --- SOUMISSION ---
+    // --- SOUMISSION DU FORMULAIRE ---
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const messageEl = document.getElementById('message');
@@ -79,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const team1Name = document.getElementById('team1-name').value.trim();
       const team2Name = document.getElementById('team2-name').value.trim();
 
+      // Validation
       if (!team1Name || !team2Name) {
         messageEl.textContent = '❌ Veuillez entrer les noms des deux équipes.';
         messageEl.className = 'message error';
@@ -91,6 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
+      // Récupération des scores
       const matchCount = parseInt(document.querySelector('input[name="match_count"]:checked').value);
       const team1Scores = [];
       const team2Scores = [];
@@ -110,12 +115,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         team2Scores.push(v2);
       }
 
+      // Cacher le message d'erreur s'il y en avait un
+      messageEl.className = 'message';
+      messageEl.textContent = '';
+
       // Calculs
       const stats = computeStats(team1Scores, team2Scores);
       const propositions = generatePropositions(stats, team1Name, team2Name);
       
       // --- SAUVEGARDE DANS SUPABASE ---
-      submitBtn.textContent = 'Sauvegarde...';
+      submitBtn.textContent = 'Enregistrement...';
       submitBtn.disabled = true;
 
       try {
@@ -131,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }]);
       } catch (dbErr) {
         console.error("Erreur de sauvegarde:", dbErr);
-        // On ne bloque pas l'affichage si la sauvegarde échoue (ex: table manquante)
+        // On ne bloque pas l'utilisateur si la sauvegarde échoue
       }
 
       showResults(competition, team1Name, team2Name, stats, propositions);
@@ -144,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// --- MOTEUR D'ANALYSE PENALTY ---
+// --- MOTEUR D'ANALYSE ---
 function computeStats(t1, t2) {
   const n = t1.length;
   const avg1 = t1.reduce((a, b) => a + b, 0) / n;
@@ -178,7 +187,8 @@ function generatePropositions(stats, name1, name2) {
   if (stats.over35 >= Math.ceil(n * 0.6)) {
     props.push({ market: 'Total de penaltys', option: 'Plus de 3.5 buts', frequency: freq(stats.over35), justification: `${stats.over35}/${n} séances à plus de 3.5 penaltys réussis.`, support: stats.over35 / n });
   } else {
-    props.push({ market: 'Total de penaltys', option: 'Moins de 4.5 buts', frequency: freq(n - scores.filter(s => s.total > 4.5).length), justification: `Tendance à moins de 4.5 penaltys réussis.`, support: 0.6 });
+    const under45 = n - scores.filter(s => s.total > 4.5).length;
+    props.push({ market: 'Total de penaltys', option: 'Moins de 4.5 buts', frequency: freq(under45), justification: `Tendance à moins de 4.5 penaltys réussis.`, support: under45 / n });
   }
 
   if (stats.wins1 >= Math.ceil(n * 0.6)) {
@@ -206,7 +216,7 @@ function showResults(competition, name1, name2, stats, propositions) {
 
   const propsHtml = propositions.length > 0
     ? propositions.map((p, i) => `
-      <div class="proposition-card" style="animation-delay:${i * 0.1}s;">
+      <div class="proposition-card">
         <div class="proposition-header">
           <span class="proposition-number">PROPOSITION ${i + 1}</span>
           <span class="proposition-frequency">${p.frequency}</span>
@@ -219,17 +229,19 @@ function showResults(competition, name1, name2, stats, propositions) {
     : '<p style="color:var(--text-secondary); text-align:center;">Pas assez de données pour formuler des propositions.</p>';
 
   results.innerHTML = `
-    <div class="card" style="max-width:100%; margin-bottom:16px;">
-      <h2 style="font-size:22px; margin-bottom:8px;">Rapport d'analyse</h2>
-      <p style="color:var(--electric-blue); font-size:15px; font-weight:700;">${name1} vs ${name2}</p>
-      <p style="color:var(--text-secondary); font-size:12px;">${competition.name}</p>
+    <div class="card" style="margin-bottom:16px;">
+      <h2 style="font-size:22px; margin-bottom:8px; font-weight:800;">Rapport d'analyse</h2>
+      <p style="color:var(--primary); font-size:16px; font-weight:800;">${name1} vs ${name2}</p>
+      <p style="color:var(--text-secondary); font-size:13px;">${competition.name}</p>
     </div>
-    <div class="card" style="max-width:100%; margin-bottom:16px;">
-      <h3 style="font-size:13px; margin-bottom:14px; text-transform:uppercase;">Historique des séances</h3>
+    
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="font-size:14px; margin-bottom:14px; text-transform:uppercase; font-weight:800; color:var(--text-secondary);">Historique</h3>
       ${matchRows}
     </div>
-    <div class="card" style="max-width:100%; margin-bottom:16px;">
-      <h3 style="font-size:13px; margin-bottom:14px; text-transform:uppercase;">Statistiques clés</h3>
+    
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="font-size:14px; margin-bottom:14px; text-transform:uppercase; font-weight:800; color:var(--text-secondary);">Statistiques</h3>
       <div class="stats-grid">
         <div class="stat-box"><div class="stat-value">${stats.avg1.toFixed(1)}</div><div class="stat-label">Moy. ${name1}</div></div>
         <div class="stat-box"><div class="stat-value">${stats.avg2.toFixed(1)}</div><div class="stat-label">Moy. ${name2}</div></div>
@@ -237,11 +249,16 @@ function showResults(competition, name1, name2, stats, propositions) {
         <div class="stat-box"><div class="stat-value">${stats.btts}/${stats.n}</div><div class="stat-label">BTTS</div></div>
       </div>
     </div>
-    <h3 style="font-size:16px; margin:24px 0 14px 0;">⚡ Propositions FIFABOT</h3>
+    
+    <h3 style="font-size:18px; margin:24px 0 16px 0; font-weight:800;">⚡ Propositions</h3>
     ${propsHtml}
-    <div style="display:flex; gap:12px; margin-top:24px; margin-bottom:24px;">
+    
+    <p style="color:var(--text-secondary); font-size:12px; margin-top:20px; text-align:center; line-height:1.5;">
+      ⚠️ Basé sur les fréquences historiques. Aucun résultat futur n'est garanti.
+    </p>
+    
+    <div style="display:flex; gap:12px; margin-top:20px; margin-bottom:24px;">
       <a href="competitions.html" class="btn btn-primary" style="text-align:center; text-decoration:none; flex:1;">Nouvelle analyse</a>
-      <a href="dashboard.html" class="btn" style="text-align:center; text-decoration:none; flex:1; background:transparent; border:1px solid var(--border); color:var(--text-secondary);">Accueil</a>
     </div>
   `;
   window.scrollTo(0, 0);
