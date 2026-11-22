@@ -2,87 +2,104 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Analyse Penalty — FIFABOT</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <nav class="navbar">
-    <a href="index.html" class="navbar-logo">FIFABOT</a>
-    <div class="navbar-links">
-      <a href="dashboard.html">Tableau de bord</a>
-      <a href="competitions.html">Compétitions</a>
-      <button id="logout-btn" class="btn" style="width:auto; padding:8px 14px; background:transparent; color:var(--text-secondary); border:1px solid var(--border); font-size:13px;">Déconnexion</button>
-    </div>
-  </nav>
+  <!-- En-tête App -->
+  <header class="app-header">
+    <p style="color: var(--text-secondary); font-size: 14px; font-weight: 600; margin-bottom: 4px;">Analyse en cours</p>
+    <h1 id="competition-name">Chargement... <span style="color: var(--accent);">.</span></h1>
+    <p id="competition-meta" style="color: var(--text-secondary); font-size: 14px; font-weight: 500; margin-top: 4px;"></p>
+  </header>
 
-  <main style="padding: 20px; max-width: 720px; margin: 0 auto; width: 100%;">
-
-    <!-- En-tête -->
-    <div id="header" style="margin-bottom: 28px; animation: fadeInUp 0.4s ease-out;">
-      <p style="color: var(--sky-blue); font-size: 12px; margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Analyse en cours</p>
-      <h1 id="competition-name" style="font-size: 26px; margin-bottom: 6px; letter-spacing: -0.5px;">Chargement...</h1>
-      <p id="competition-meta" style="color: var(--text-secondary); font-size: 14px; font-weight: 500;"></p>
-    </div>
+  <main style="padding: 10px 20px; max-width: 600px; margin: 0 auto; width: 100%;">
 
     <!-- Formulaire -->
     <form id="analyzer-form" style="display:none;">
 
-      <!-- Choix du nombre de matchs -->
-      <div class="card" style="max-width:100%; margin-bottom:16px;">
-        <h3 style="font-size:15px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--text-secondary);">Nombre de séances</h3>
+      <!-- Choix du nombre de séances -->
+      <div class="card" style="padding: 20px;">
+        <h3 style="font-size:14px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--text-secondary);">Nombre de séances</h3>
         <div style="display:flex; gap:12px;">
-          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:12px; background:rgba(8,13,24,0.6); border:1px solid var(--border); border-radius:10px; font-weight:600; font-size:14px;">
+          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:14px; background:var(--bg-main); border:1px solid transparent; border-radius:12px; font-weight:600; font-size:14px; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
             <input type="radio" name="match_count" value="4" checked> 4 séances
           </label>
-          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:12px; background:rgba(8,13,24,0.6); border:1px solid var(--border); border-radius:10px; font-weight:600; font-size:14px;">
+          <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:14px; background:var(--bg-main); border:1px solid transparent; border-radius:12px; font-weight:600; font-size:14px; box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);">
             <input type="radio" name="match_count" value="5"> 5 séances
           </label>
         </div>
       </div>
 
       <!-- Équipe 1 -->
-      <div class="card" style="max-width:100%; margin-bottom:16px;">
-        <h3 style="font-size:15px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--electric-blue);">Équipe 1</h3>
+      <div class="card" style="padding: 20px;">
+        <h3 style="font-size:16px; margin-bottom:16px; font-weight:800; color:var(--primary);">Équipe 1</h3>
         <div class="form-group">
           <label for="team1-name">Nom de l'équipe</label>
           <input type="text" id="team1-name" placeholder="Ex : PSG" required>
         </div>
-        <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 10px; font-weight: 600;">
-          Nombre de tirs réussis (du plus ancien au plus récent)
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 12px; font-weight: 600;">
+          Tirs réussis (du plus ancien au plus récent)
         </p>
         <div id="team1-scores"></div>
       </div>
 
       <!-- Équipe 2 -->
-      <div class="card" style="max-width:100%; margin-bottom:16px;">
-        <h3 style="font-size:15px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--electric-blue);">Équipe 2</h3>
+      <div class="card" style="padding: 20px;">
+        <h3 style="font-size:16px; margin-bottom:16px; font-weight:800; color:var(--primary);">Équipe 2</h3>
         <div class="form-group">
           <label for="team2-name">Nom de l'équipe</label>
           <input type="text" id="team2-name" placeholder="Ex : Marseille" required>
         </div>
-        <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 10px; font-weight: 600;">
-          Nombre de tirs réussis (du plus ancien au plus récent)
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 12px; font-weight: 600;">
+          Tirs réussis (du plus ancien au plus récent)
         </p>
         <div id="team2-scores"></div>
       </div>
 
       <!-- Bouton -->
-      <button type="submit" class="btn btn-primary" style="margin-bottom:16px;">
+      <button type="submit" class="btn btn-primary" style="margin-bottom:24px;">
         ⚡ Lancer l'analyse
       </button>
       <div id="message" class="message"></div>
     </form>
 
     <!-- Résultats -->
-    <div id="results" style="display:none;"></div>
+    <div id="results" style="display:none; padding-bottom: 20px;"></div>
 
   </main>
 
+  <!-- BARRE DE NAVIGATION EN BAS -->
+  <nav class="app-bottom-nav">
+    <a href="dashboard.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      Accueil
+    </a>
+    <a href="competitions.html" class="nav-item active">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      Jeux
+    </a>
+    <a href="history.html" class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      Historique
+    </a>
+    <a href="#" id="logout-btn-nav" class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      Quitter
+    </a>
+  </nav>
+
   <script src="js/supabase-client.js"></script>
   <script src="js/analyzer.js"></script>
-  <script src="js/auth.js"></script>
+  <script>
+    document.getElementById('logout-btn-nav').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await window.supabaseClient.auth.signOut();
+      window.location.href = 'index.html';
+    });
+  </script>
 </body>
 </html>
