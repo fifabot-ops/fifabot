@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord — FIFABOT</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-logo">FIFABOT</a>
+    <div class="navbar-links">
+      <button id="logout-btn" class="btn" style="width:auto; padding:8px 16px; background:transparent; color:var(--text-secondary); border:1px solid var(--border);">Déconnexion</button>
+    </div>
+  </nav>
+
+  <main class="main-container">
+    <div class="card">
+      <h1 class="card-title">Tableau de bord</h1>
+      <p class="card-subtitle">Bienvenue sur votre espace FIFABOT</p>
+      <p style="color: var(--text-secondary); font-size: 14px;">
+        Connecté en tant que : <strong id="user-email" style="color: var(--electric-blue);">...</strong>
+      </p>
+    </div>
+  </main>
+
+  <script src="js/supabase-client.js"></script>
+  <script>
+    (async () => {
+      const { data } = await window.supabaseClient.auth.getUser();
+      if (!data.user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      document.getElementById('user-email').textContent = data.user.email;
+    })();
+  </script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
