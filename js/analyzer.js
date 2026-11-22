@@ -109,7 +109,7 @@ window.updateScore = function(btn, change) {
 };
 
 // ============================================
-// MOTEUR STATISTIQUE PENALTY FIFABOT
+// MOTEUR STATISTIQUE PENALTY FIFABOT v3
 // ============================================
 function analyzeHistory(t1, t2, name1, name2) {
   const n = t1.length;
@@ -118,10 +118,7 @@ function analyzeHistory(t1, t2, name1, name2) {
   const totalAvg = avg1 + avg2;
   
   // Comptages
-  let eq2PlusOui = 0;
-  let eq3PlusNon = 0;
-  let eq4PlusNon = 0;
-  let eq5PlusNon = 0;
+  let eq3PlusNon = 0, eq4PlusNon = 0, eq5PlusNon = 0;
   let over65 = 0, under65 = 0, over75 = 0, under75 = 0, over85 = 0, under85 = 0;
   let t1Over35 = 0, t1Under25 = 0, t2Over35 = 0, t2Under25 = 0;
   let handicap1 = 0, handicap2 = 0;
@@ -129,7 +126,6 @@ function analyzeHistory(t1, t2, name1, name2) {
   for (let i = 0; i < n; i++) {
     const s1 = t1[i], s2 = t2[i], total = s1 + s2;
     
-    if (s1 >= 2 && s2 >= 2) eq2PlusOui++;
     if (s1 < 3 || s2 < 3) eq3PlusNon++;
     if (s1 < 4 || s2 < 4) eq4PlusNon++;
     if (s1 < 5 || s2 < 5) eq5PlusNon++;
@@ -147,9 +143,8 @@ function analyzeHistory(t1, t2, name1, name2) {
     if (s2 - s1 > -1.5) handicap2++;
   }
 
-  // --- CALCUL DES PROBABILITÉS ---
+  // Marchés pour l'option 1 (Recommandée) - On a retiré le "Chaque équipe marque 2+"
   const markets = [
-    { id: 'eq2+', label: 'Chaque équipe marque (2) ou Plus : OUI', rate: eq2PlusOui/n },
     { id: 'eq3-', label: 'Chaque équipe marque (3) ou Plus : NON', rate: eq3PlusNon/n },
     { id: 'eq4-', label: 'Chaque équipe marque (4) ou Plus : NON', rate: eq4PlusNon/n },
     { id: 'eq5-', label: 'Chaque équipe marque (5) ou Plus : NON', rate: eq5PlusNon/n },
@@ -167,36 +162,51 @@ function analyzeHistory(t1, t2, name1, name2) {
     { id: 'h2', label: `Handicap : 2 (1.5)`, rate: handicap2/n }
   ];
 
+  // Trier par taux de réussite
   markets.sort((a, b) => b.rate - a.rate);
 
-  // Option 1 : La plus forte probabilité
+  // Option 1 : La plus forte probabilité globale
   const bestMarket = markets[0];
 
-  // Option 2 : Moins risquée (on cherche un marché avec un taux > 50% qui n'est pas l'option 1)
-  let saferMarket = markets.find(m => m.id !== bestMarket.id && m.rate >= 0.5);
-  if (!saferMarket) saferMarket = markets[1];
+  // Option 2 : Basée sur le Total (Moins de 6.5, 7.5 ou 8.5) - plus sûr
+  let safeTotal;
+  if (under65 / n >= 0.5) {
+    safeTotal = { label: 'Total (6.5) : Moins de', rate: under65 / n };
+  } else if (under75 / n >= 0.5) {
+    safeTotal = { label: 'Total (7.5) : Moins de', rate: under75 / n };
+  } else {
+    safeTotal = { label: 'Total (8.5) : Moins de', rate: under85 / n };
+  }
 
-  // Option 3 : Score Exact Équilibré
-  // On arrondit la moyenne de chaque équipe pour trouver le score le plus plausible
-  const likelyS1 = Math.round(avg1);
-  const likelyS2 = Math.round(avg2);
+  // Option 3 : Score Exact (Sans match nul)
+  let likelyS1 = Math.round(avg1);
+  let likelyS2 = Math.round(avg2);
+  
+  // Si le score est nul (ex: 4-4), on donne +1 à l'équipe la plus forte
+  if (likelyS1 === likelyS2) {
+    if (avg1 >= avg2) {
+      likelyS1 += 1;
+    } else {
+      likelyS2 += 1;
+    }
+  }
   const exactScore = `${likelyS1} - ${likelyS2}`;
 
   return [
     { 
       market: 'Recommandation FIFABOT', 
       option: bestMarket.label, 
-      justification: `Réussi dans ${Math.round(bestMarket.rate * 100)}% des séances analysées.` 
+      justification: `La plus forte probabilité historique (${Math.round(bestMarket.rate * 100)}%).` 
     },
     { 
-      market: 'Option Sécurisée', 
-      option: saferMarket.label, 
-      justification: `Pari plus sûr, avec ${Math.round(saferMarket.rate * 100)}% de réussite historique.` 
+      market: 'Option Sécurisée (Total)', 
+      option: safeTotal.label, 
+      justification: `Pari plus prudent sur le total de buts (${Math.round(safeTotal.rate * 100)}%).` 
     },
     { 
       market: 'Score Exact (Base)', 
       option: exactScore, 
-      justification: `Score moyen calculé sur les performances de ${name1} (${avg1.toFixed(1)}) et ${name2} (${avg2.toFixed(1)}).` 
+      justification: `Basé sur les moyennes des deux équipes, sans match nul.` 
     }
   ];
 }
@@ -213,7 +223,7 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
       <div class="proposition-header">
         <span class="proposition-number" style="background: ${i === 0 ? 'var(--primary)' : i === 1 ? 'var(--success)' : 'var(--accent)'};">${p.market}</span>
       </div>
-      <div class="proposition-option" style="margin-top: 12px; font-size: 22px;">${p.option}</div>
+      <div class="proposition-option" style="margin-top: 12px; font-size: 20px;">${p.option}</div>
       <div class="proposition-justification">${p.justification}</div>
     </div>
   `).join('');
@@ -234,4 +244,4 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
     </div>
   `;
   window.scrollTo(0, 0);
-                          }
+                              }
