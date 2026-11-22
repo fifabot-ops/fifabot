@@ -4,14 +4,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const metaEl = document.getElementById('competition-meta');
     const form = document.getElementById('analyzer-form');
 
-    // 1. Vérifier la connexion
     const { data: userData, error: authError } = await window.supabaseClient.auth.getUser();
     if (authError || !userData.user) {
       window.location.href = 'login.html';
       return;
     }
 
-    // 2. VÉRIFICATION PREMIUM (Sécurité)
     const { data: payments } = await window.supabaseClient
       .from('payment_requests')
       .select('status')
@@ -41,7 +39,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     form.style.display = 'block';
 
-    // --- FORMULAIRE DE SAISIE DES SCORES ---
     function generateScoreFields(count) {
       for (const teamNum of [1, 2]) {
         const container = document.getElementById(`team${teamNum}-scores`);
@@ -67,7 +64,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       radio.addEventListener('change', (e) => generateScoreFields(parseInt(e.target.value)));
     });
 
-    // --- SOUMISSION & MOTEUR ---
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const team1Name = document.getElementById('team1-name').value.trim();
@@ -82,10 +78,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         t2Scores.push(parseInt(document.querySelector(`.score-input[data-team="2"][data-match="${i}"]`).value));
       }
 
-      // --- CALCUL DES PROPOSITIONS (TA LOGIQUE) ---
       const propositions = analyzeHistory(t1Scores, t2Scores, team1Name, team2Name);
 
-      // Sauvegarde Supabase
       try {
         await window.supabaseClient.from('analyses').insert([{
           user_id: userData.user.id,
@@ -115,64 +109,82 @@ window.updateScore = function(btn, change) {
 };
 
 // ============================================
-// MOTEUR STATISTIQUE FIFABOT
+// MOTEUR STATISTIQUE PENALTY FIFABOT
 // ============================================
 function analyzeHistory(t1, t2, name1, name2) {
   const n = t1.length;
-  
-  // Calcul des moyennes et totaux
   const avg1 = t1.reduce((a, b) => a + b, 0) / n;
   const avg2 = t2.reduce((a, b) => a + b, 0) / n;
   const totalAvg = avg1 + avg2;
   
-  // Comptages pour les marchés
-  let bttsCount = 0;
-  let over65Count = 0, under65Count = 0;
-  let over75Count = 0, under75Count = 0;
-  let over85Count = 0, under85Count = 0;
-  let t1Over35 = 0, t2Over35 = 0;
-  let t1Over45 = 0, t2Over45 = 0;
+  // Comptages
+  let eq2PlusOui = 0;
+  let eq3PlusNon = 0;
+  let eq4PlusNon = 0;
+  let eq5PlusNon = 0;
+  let over65 = 0, under65 = 0, over75 = 0, under75 = 0, over85 = 0, under85 = 0;
+  let t1Over35 = 0, t1Under25 = 0, t2Over35 = 0, t2Under25 = 0;
+  let handicap1 = 0, handicap2 = 0;
+  
   let scoresCount = {};
 
   for (let i = 0; i < n; i++) {
     const s1 = t1[i], s2 = t2[i], total = s1 + s2;
     
-    if (s1 > 0 && s2 > 0) bttsCount++;
+    if (s1 >= 2 && s2 >= 2) eq2PlusOui++;
+    if (s1 < 3 || s2 < 3) eq3PlusNon++;
+    if (s1 < 4 || s2 < 4) eq4PlusNon++;
+    if (s1 < 5 || s2 < 5) eq5PlusNon++;
     
-    if (total > 6.5) over65Count++; else under65Count++;
-    if (total > 7.5) over75Count++; else under75Count++;
-    if (total > 8.5) over85Count++; else under85Count++;
+    if (total > 6.5) over65++; else under65++;
+    if (total > 7.5) over75++; else under75++;
+    if (total > 8.5) over85++; else under85++;
     
     if (s1 > 3.5) t1Over35++;
-    if (s1 > 4.5) t1Over45++;
+    if (s1 < 2.5) t1Under25++;
     if (s2 > 3.5) t2Over35++;
-    if (s2 > 4.5) t2Over45++;
+    if (s2 < 2.5) t2Under25++;
     
+    // Handicap
+    if (s1 - s2 > 1.5) handicap1++;
+    if (s2 - s1 > -1.5) handicap2++;
+
     const scoreStr = `${s1}-${s2}`;
     scoresCount[scoreStr] = (scoresCount[scoreStr] || 0) + 1;
   }
 
-  // 1. Choix de la Recommandation (Option 1)
-  // On cherche l'option qui a le plus fort taux de réussite historique
-  let bestOption = { name: '', success: 0, desc: '' };
-  
-  // Test des marchés basés sur les moyennes
-  if (bttsCount / n >= 0.6) bestOption = { name: 'Les deux équipes marquent : OUI', success: bttsCount/n, desc: `Historique de ${bttsCount}/${n} matchs avec buts des 2 côtés.` };
-  else if (totalAvg > 7.5) bestOption = { name: 'Total (7.5) : Plus de', success: over75Count/n, desc: `Moyenne de buts très élevée (${totalAvg.toFixed(1)}).` };
-  else if (totalAvg < 6.5) bestOption = { name: 'Total (6.5) : Moins de', success: under65Count/n, desc: `Moyenne de buts basse (${totalAvg.toFixed(1)}).` };
-  else if (avg1 > 4.5) bestOption = { name: `Total ${name1} (4.5) : Plus de`, success: t1Over45/n, desc: `${name1} marque énormément (Moy: ${avg1.toFixed(1)}).` };
-  else if (avg2 > 4.5) bestOption = { name: `Total ${name2} (4.5) : Plus de`, success: t2Over45/n, desc: `${name2} marque énormément (Moy: ${avg2.toFixed(1)}).` };
-  else bestOption = { name: 'Total (6.5) : Moins de', success: under65Count/n, desc: 'Matchs généralement fermés.' };
+  // --- CALCUL DES PROBABILITÉS POUR CHAQUE MARCHÉ ---
+  const markets = [
+    { id: 'eq2+', label: 'Chaque équipe marque (2) ou Plus : OUI', rate: eq2PlusOui/n },
+    { id: 'eq3-', label: 'Chaque équipe marque (3) ou Plus : NON', rate: eq3PlusNon/n },
+    { id: 'eq4-', label: 'Chaque équipe marque (4) ou Plus : NON', rate: eq4PlusNon/n },
+    { id: 'eq5-', label: 'Chaque équipe marque (5) ou Plus : NON', rate: eq5PlusNon/n },
+    { id: 'o65', label: 'Total (6.5) : Plus de', rate: over65/n },
+    { id: 'u65', label: 'Total (6.5) : Moins de', rate: under65/n },
+    { id: 'o75', label: 'Total (7.5) : Plus de', rate: over75/n },
+    { id: 'u75', label: 'Total (7.5) : Moins de', rate: under75/n },
+    { id: 'o85', label: 'Total (8.5) : Plus de', rate: over85/n },
+    { id: 'u85', label: 'Total (8.5) : Moins de', rate: under85/n },
+    { id: 't1o35', label: `Total 1 (3.5) : Plus de`, rate: t1Over35/n },
+    { id: 't1u25', label: `Total 1 (2.5) : Moins de`, rate: t1Under25/n },
+    { id: 't2o35', label: `Total 2 (3.5) : Plus de`, rate: t2Over35/n },
+    { id: 't2u25', label: `Total 2 (2.5) : Moins de`, rate: t2Under25/n },
+    { id: 'h1', label: `Handicap : 1 (-1.5)`, rate: handicap1/n },
+    { id: 'h2', label: `Handicap : 2 (1.5)`, rate: handicap2/n }
+  ];
 
-  // 2. Choix de l'Option 2 (Alternative)
-  let altOption = { name: '', desc: '' };
-  if (avg1 - avg2 > 1.5) altOption = { name: `Handicap : 1 (-1.5)`, desc: `${name1} domine largement les débats.` };
-  else if (avg2 - avg1 > 1.5) altOption = { name: `Handicap : 2 (+1.5)`, desc: `${name2} est solide, un handicap est jouable.` };
-  else if (totalAvg > 7.5) altOption = { name: 'Total (8.5) : Plus de', desc: `Possibilité de match à très haut score.` };
-  else altOption = { name: 'Chaque équipe marque (2) ou Plus : Non', desc: 'Les équipes ne dépassent pas souvent les 2 buts.' };
+  // On trie les marchés par taux de réussite décroissant
+  markets.sort((a, b) => b.rate - a.rate);
 
-  // 3. Choix du Score Exact
-  // On prend le score qui est revenu le plus souvent
+  // --- SÉLECTION OPTION 1 (Le plus fiable) ---
+  const bestMarket = markets[0];
+
+  // --- SÉLECTION OPTION 2 (Moins risqué) ---
+  // On cherche un marché qui n'est pas le même que l'option 1, et qui a un bon taux
+  let saferMarket = markets.find(m => m.id !== bestMarket.id && m.rate >= 0.5);
+  if (!saferMarket) saferMarket = markets[1]; // Fallback sur le 2ème meilleur
+
+  // --- SCORE EXACT ---
   let bestScore = '3-1';
   let maxCount = 0;
   for (const [score, count] of Object.entries(scoresCount)) {
@@ -180,9 +192,21 @@ function analyzeHistory(t1, t2, name1, name2) {
   }
 
   return [
-    { market: 'Recommandation FIFABOT', option: bestOption.name, justification: bestOption.desc },
-    { market: 'Option Alternative', option: altOption.name, justification: altOption.desc },
-    { market: 'Score Exact', option: bestScore.replace('-', ' - '), justification: `Ce score est apparu ${maxCount} fois sur les ${n} matchs.` }
+    { 
+      market: 'Recommandation FIFABOT', 
+      option: bestMarket.label, 
+      justification: `Réussi dans ${Math.round(bestMarket.rate * 100)}% des séances analysées.` 
+    },
+    { 
+      market: 'Option Sécurisée', 
+      option: saferMarket.label, 
+      justification: `Pari plus sûr, avec ${Math.round(saferMarket.rate * 100)}% de réussite historique.` 
+    },
+    { 
+      market: 'Score Exact', 
+      option: bestScore.replace('-', ' - '), 
+      justification: `Ce score est apparu ${maxCount} fois sur ${n} séances.` 
+    }
   ];
 }
 
@@ -198,7 +222,7 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
       <div class="proposition-header">
         <span class="proposition-number" style="background: ${i === 0 ? 'var(--primary)' : i === 1 ? 'var(--success)' : 'var(--accent)'};">${p.market}</span>
       </div>
-      <div class="proposition-option" style="margin-top: 12px; font-size: 22px;">${p.option}</div>
+      <div class="proposition-option" style="margin-top: 12px; font-size: 20px;">${p.option}</div>
       <div class="proposition-justification">${p.justification}</div>
     </div>
   `).join('');
@@ -210,7 +234,7 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
         <span style="color:var(--text-secondary); font-size:16px; font-weight:600;">vs</span> 
         <span style="color:var(--accent);">${name2}</span>
       </h2>
-      <p style="color:var(--text-secondary); font-size:13px;">Moyenne totale : ${totalAvg} buts</p>
+      <p style="color:var(--text-secondary); font-size:13px;">Moyenne totale : ${totalAvg} penaltys</p>
     </div>
     <h3 style="font-size:18px; margin:24px 0 16px 0; font-weight:800; text-align:center;">⚡ Top 3 des Prédictions</h3>
     ${propsHtml}
@@ -219,4 +243,4 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
     </div>
   `;
   window.scrollTo(0, 0);
-    }
+        }
