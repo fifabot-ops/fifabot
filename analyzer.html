@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Analyse — FIFABOT</title>
+  <title>Analyse Penalty — FIFABOT</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -32,13 +32,13 @@
 
       <!-- Choix du nombre de matchs -->
       <div class="card" style="max-width:100%; margin-bottom:16px;">
-        <h3 style="font-size:15px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--text-secondary);">Nombre de matchs</h3>
+        <h3 style="font-size:15px; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700; color:var(--text-secondary);">Nombre de séances</h3>
         <div style="display:flex; gap:12px;">
           <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:12px; background:rgba(8,13,24,0.6); border:1px solid var(--border); border-radius:10px; font-weight:600; font-size:14px;">
-            <input type="radio" name="match_count" value="4" checked> 4 matchs
+            <input type="radio" name="match_count" value="4" checked> 4 séances
           </label>
           <label style="display:flex; align-items:center; gap:8px; color:var(--text-main); cursor:pointer; flex:1; padding:12px; background:rgba(8,13,24,0.6); border:1px solid var(--border); border-radius:10px; font-weight:600; font-size:14px;">
-            <input type="radio" name="match_count" value="5"> 5 matchs
+            <input type="radio" name="match_count" value="5"> 5 séances
           </label>
         </div>
       </div>
@@ -51,7 +51,7 @@
           <input type="text" id="team1-name" placeholder="Ex : PSG" required>
         </div>
         <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 10px; font-weight: 600;">
-          Buts marqués — du plus ancien au plus récent
+          Nombre de tirs réussis (du plus ancien au plus récent)
         </p>
         <div id="team1-scores"></div>
       </div>
@@ -64,7 +64,7 @@
           <input type="text" id="team2-name" placeholder="Ex : Marseille" required>
         </div>
         <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 10px; font-weight: 600;">
-          Buts marqués — du plus ancien au plus récent
+          Nombre de tirs réussis (du plus ancien au plus récent)
         </p>
         <div id="team2-scores"></div>
       </div>
