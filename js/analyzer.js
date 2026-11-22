@@ -125,8 +125,6 @@ function analyzeHistory(t1, t2, name1, name2) {
   let over65 = 0, under65 = 0, over75 = 0, under75 = 0, over85 = 0, under85 = 0;
   let t1Over35 = 0, t1Under25 = 0, t2Over35 = 0, t2Under25 = 0;
   let handicap1 = 0, handicap2 = 0;
-  
-  let scoresCount = {};
 
   for (let i = 0; i < n; i++) {
     const s1 = t1[i], s2 = t2[i], total = s1 + s2;
@@ -145,15 +143,11 @@ function analyzeHistory(t1, t2, name1, name2) {
     if (s2 > 3.5) t2Over35++;
     if (s2 < 2.5) t2Under25++;
     
-    // Handicap
     if (s1 - s2 > 1.5) handicap1++;
     if (s2 - s1 > -1.5) handicap2++;
-
-    const scoreStr = `${s1}-${s2}`;
-    scoresCount[scoreStr] = (scoresCount[scoreStr] || 0) + 1;
   }
 
-  // --- CALCUL DES PROBABILITÉS POUR CHAQUE MARCHÉ ---
+  // --- CALCUL DES PROBABILITÉS ---
   const markets = [
     { id: 'eq2+', label: 'Chaque équipe marque (2) ou Plus : OUI', rate: eq2PlusOui/n },
     { id: 'eq3-', label: 'Chaque équipe marque (3) ou Plus : NON', rate: eq3PlusNon/n },
@@ -173,23 +167,20 @@ function analyzeHistory(t1, t2, name1, name2) {
     { id: 'h2', label: `Handicap : 2 (1.5)`, rate: handicap2/n }
   ];
 
-  // On trie les marchés par taux de réussite décroissant
   markets.sort((a, b) => b.rate - a.rate);
 
-  // --- SÉLECTION OPTION 1 (Le plus fiable) ---
+  // Option 1 : La plus forte probabilité
   const bestMarket = markets[0];
 
-  // --- SÉLECTION OPTION 2 (Moins risqué) ---
-  // On cherche un marché qui n'est pas le même que l'option 1, et qui a un bon taux
+  // Option 2 : Moins risquée (on cherche un marché avec un taux > 50% qui n'est pas l'option 1)
   let saferMarket = markets.find(m => m.id !== bestMarket.id && m.rate >= 0.5);
-  if (!saferMarket) saferMarket = markets[1]; // Fallback sur le 2ème meilleur
+  if (!saferMarket) saferMarket = markets[1];
 
-  // --- SCORE EXACT ---
-  let bestScore = '3-1';
-  let maxCount = 0;
-  for (const [score, count] of Object.entries(scoresCount)) {
-    if (count > maxCount) { maxCount = count; bestScore = score; }
-  }
+  // Option 3 : Score Exact Équilibré
+  // On arrondit la moyenne de chaque équipe pour trouver le score le plus plausible
+  const likelyS1 = Math.round(avg1);
+  const likelyS2 = Math.round(avg2);
+  const exactScore = `${likelyS1} - ${likelyS2}`;
 
   return [
     { 
@@ -203,9 +194,9 @@ function analyzeHistory(t1, t2, name1, name2) {
       justification: `Pari plus sûr, avec ${Math.round(saferMarket.rate * 100)}% de réussite historique.` 
     },
     { 
-      market: 'Score Exact', 
-      option: bestScore.replace('-', ' - '), 
-      justification: `Ce score est apparu ${maxCount} fois sur ${n} séances.` 
+      market: 'Score Exact (Base)', 
+      option: exactScore, 
+      justification: `Score moyen calculé sur les performances de ${name1} (${avg1.toFixed(1)}) et ${name2} (${avg2.toFixed(1)}).` 
     }
   ];
 }
@@ -222,7 +213,7 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
       <div class="proposition-header">
         <span class="proposition-number" style="background: ${i === 0 ? 'var(--primary)' : i === 1 ? 'var(--success)' : 'var(--accent)'};">${p.market}</span>
       </div>
-      <div class="proposition-option" style="margin-top: 12px; font-size: 20px;">${p.option}</div>
+      <div class="proposition-option" style="margin-top: 12px; font-size: 22px;">${p.option}</div>
       <div class="proposition-justification">${p.justification}</div>
     </div>
   `).join('');
@@ -243,4 +234,4 @@ function showResults(competition, name1, name2, t1, t2, propositions) {
     </div>
   `;
   window.scrollTo(0, 0);
-        }
+                          }
