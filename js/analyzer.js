@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         for (let i = 1; i <= count; i++) {
           container.innerHTML += `
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-              <span style="color:var(--text-secondary); font-size:12px; min-width:70px; font-weight:600;">Match ${i}</span>
+              <span style="color:var(--text-secondary); font-size:12px; min-width:70px; font-weight:600;">Séance ${i}</span>
               <input type="number" min="0" max="20" required
                 data-team="${teamNum}" data-match="${i}"
                 class="score-input"
@@ -71,9 +71,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- SOUMISSION ---
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const messageEl = document.getElementById('message');
+      const submitBtn = form.querySelector('button[type="submit"]');
       
       const team1Name = document.getElementById('team1-name').value.trim();
       const team2Name = document.getElementById('team2-name').value.trim();
@@ -101,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const v2 = parseInt(s2.value);
         
         if (isNaN(v1) || isNaN(v2) || v1 < 0 || v2 < 0) {
-          messageEl.textContent = `❌ Scores invalides au match ${i}.`;
+          messageEl.textContent = `❌ Scores invalides à la séance ${i}.`;
           messageEl.className = 'message error';
           return;
         }
@@ -112,18 +113,38 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Calculs
       const stats = computeStats(team1Scores, team2Scores);
       const propositions = generatePropositions(stats, team1Name, team2Name);
+      
+      // --- SAUVEGARDE DANS SUPABASE ---
+      submitBtn.textContent = 'Sauvegarde...';
+      submitBtn.disabled = true;
+
+      try {
+        await window.supabaseClient.from('analyses').insert([{
+          user_id: userData.user.id,
+          competition_id: competition.id,
+          team_1_name: team1Name,
+          team_2_name: team2Name,
+          match_count: matchCount,
+          historical_scores: { team1: team1Scores, team2: team2Scores },
+          statistical_results: stats,
+          generated_predictions: propositions
+        }]);
+      } catch (dbErr) {
+        console.error("Erreur de sauvegarde:", dbErr);
+        // On ne bloque pas l'affichage si la sauvegarde échoue (ex: table manquante)
+      }
+
       showResults(competition, team1Name, team2Name, stats, propositions);
     });
 
   } catch (err) {
-    // Si une erreur grave arrive, on l'affiche à l'écran !
     document.getElementById('competition-name').textContent = 'Erreur critique';
     document.getElementById('competition-meta').textContent = err.message;
     console.error(err);
   }
 });
 
-// --- MOTEUR D'ANALYSE ---
+// --- MOTEUR D'ANALYSE PENALTY ---
 function computeStats(t1, t2) {
   const n = t1.length;
   const avg1 = t1.reduce((a, b) => a + b, 0) / n;
@@ -137,7 +158,7 @@ function computeStats(t1, t2) {
     wins2: scores.filter(s => s.t2 > s.t1).length,
     draws: scores.filter(s => s.t1 === s.t2).length,
     btts: scores.filter(s => s.t1 > 0 && s.t2 > 0).length,
-    over25: scores.filter(s => s.total > 2.5).length,
+    over35: scores.filter(s => s.total > 3.5).length,
     evenTotal: scores.filter(s => s.total % 2 === 0).length,
     oddTotal: scores.filter(s => s.total % 2 === 1).length
   };
@@ -149,21 +170,21 @@ function generatePropositions(stats, name1, name2) {
   const props = [];
 
   if (stats.btts >= Math.ceil(n * 0.6)) {
-    props.push({ market: 'Les deux équipes marquent', option: 'OUI', frequency: freq(stats.btts), justification: `${stats.btts}/${n} matchs avec but des deux côtés.`, support: stats.btts / n });
+    props.push({ market: 'Les deux équipes marquent', option: 'OUI', frequency: freq(stats.btts), justification: `${stats.btts}/${n} séances avec au moins un tir réussi des deux côtés.`, support: stats.btts / n });
   } else if (stats.btts <= Math.floor(n * 0.4)) {
-    props.push({ market: 'Les deux équipes marquent', option: 'NON', frequency: freq(n - stats.btts), justification: `${n - stats.btts}/${n} matchs avec au moins une équipe muette.`, support: (n - stats.btts) / n });
+    props.push({ market: 'Les deux équipes marquent', option: 'NON', frequency: freq(n - stats.btts), justification: `${n - stats.btts}/${n} séances avec au moins une équipe à 0.`, support: (n - stats.btts) / n });
   }
 
-  if (stats.over25 >= Math.ceil(n * 0.6)) {
-    props.push({ market: 'Total de buts', option: 'Plus de 2.5 buts', frequency: freq(stats.over25), justification: `${stats.over25}/${n} matchs à plus de 2.5 buts.`, support: stats.over25 / n });
-  } else if (stats.over25 <= Math.floor(n * 0.4)) {
-    props.push({ market: 'Total de buts', option: 'Moins de 2.5 buts', frequency: freq(n - stats.over25), justification: `${n - stats.over25}/${n} matchs à moins de 2.5 buts.`, support: (n - stats.over25) / n });
+  if (stats.over35 >= Math.ceil(n * 0.6)) {
+    props.push({ market: 'Total de penaltys', option: 'Plus de 3.5 buts', frequency: freq(stats.over35), justification: `${stats.over35}/${n} séances à plus de 3.5 penaltys réussis.`, support: stats.over35 / n });
+  } else {
+    props.push({ market: 'Total de penaltys', option: 'Moins de 4.5 buts', frequency: freq(n - scores.filter(s => s.total > 4.5).length), justification: `Tendance à moins de 4.5 penaltys réussis.`, support: 0.6 });
   }
 
   if (stats.wins1 >= Math.ceil(n * 0.6)) {
-    props.push({ market: `Victoire ${name1}`, option: '1X2', frequency: freq(stats.wins1), justification: `${name1} gagne ${stats.wins1}/${n} matchs.`, support: stats.wins1 / n });
+    props.push({ market: `Victoire ${name1}`, option: '1X2', frequency: freq(stats.wins1), justification: `${name1} remporte ${stats.wins1}/${n} séances.`, support: stats.wins1 / n });
   } else if (stats.wins2 >= Math.ceil(n * 0.6)) {
-    props.push({ market: `Victoire ${name2}`, option: '1X2', frequency: freq(stats.wins2), justification: `${name2} gagne ${stats.wins2}/${n} matchs.`, support: stats.wins2 / n });
+    props.push({ market: `Victoire ${name2}`, option: '1X2', frequency: freq(stats.wins2), justification: `${name2} remporte ${stats.wins2}/${n} séances.`, support: stats.wins2 / n });
   }
 
   props.sort((a, b) => b.support - a.support);
@@ -195,7 +216,7 @@ function showResults(competition, name1, name2, stats, propositions) {
         <div class="proposition-justification">${p.justification}</div>
       </div>
     `).join('')
-    : '<p style="color:var(--text-secondary); text-align:center;">Pas assez de données pour 3 propositions.</p>';
+    : '<p style="color:var(--text-secondary); text-align:center;">Pas assez de données pour formuler des propositions.</p>';
 
   results.innerHTML = `
     <div class="card" style="max-width:100%; margin-bottom:16px;">
@@ -204,7 +225,7 @@ function showResults(competition, name1, name2, stats, propositions) {
       <p style="color:var(--text-secondary); font-size:12px;">${competition.name}</p>
     </div>
     <div class="card" style="max-width:100%; margin-bottom:16px;">
-      <h3 style="font-size:13px; margin-bottom:14px; text-transform:uppercase;">Historique</h3>
+      <h3 style="font-size:13px; margin-bottom:14px; text-transform:uppercase;">Historique des séances</h3>
       ${matchRows}
     </div>
     <div class="card" style="max-width:100%; margin-bottom:16px;">
